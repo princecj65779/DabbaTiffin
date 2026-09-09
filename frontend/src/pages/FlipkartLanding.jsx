@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import ProductTabs from "../components/ProductTabs";
 
 const categories = [
-  { label: "For You", icon: "🛍", bg: "bg-[#EAF4FF]" },
-  { label: "Fashion", icon: "👕", bg: "bg-[#FFF6D8]" },
-  { label: "Mobiles", icon: "📱", bg: "bg-[#EAF8EF]" },
-  { label: "Electronics", icon: "💻", bg: "bg-[#EEF3FF]" },
-  { label: "Beauty", icon: "💄", bg: "bg-[#FFEAF2]" },
-  { label: "Home", icon: "💡", bg: "bg-[#FFF1DF]" },
-  { label: "Appliances", icon: "📺", bg: "bg-[#F0F2F5]" },
-  { label: "Travel", icon: "✈", bg: "bg-[#E7F6FF]" },
+  { label: "For You", image: "/flipkart/backpack.jpg" },
+  { label: "Fashion", image: "/flipkart/running-shoes.jpg" },
+  { label: "Mobiles", image: "/flipkart/phone-launch.jpg" },
+  { label: "Electronics", image: "/flipkart/electronics-sale.jpg" },
+  { label: "Beauty", image: "/flipkart/beauty-category.jpg" },
+  { label: "Home", image: "/flipkart/home-category.jpg" },
+  { label: "Appliances", image: "/flipkart/appliances-category.jpg" },
+  { label: "Travel", image: "/flipkart/travel-deals.jpg" },
 ];
 
 const promoCards = [
@@ -81,7 +81,7 @@ export default function FlipkartLanding() {
                   <div
                     className="relative h-full min-w-[76px] flex flex-col items-center justify-center gap-1 text-sm font-bold text-ink transition hover:text-bottle"
                   >
-                    <CategoryIcon icon={category.icon} bg={category.bg} />
+                    <CategoryIcon image={category.image} label={category.label} />
                     <span>{category.label}</span>
                     {category.label === "For You" && <span className="absolute bottom-0 h-1 w-full rounded-t bg-bottle" />}
                   </div>
@@ -152,13 +152,11 @@ export default function FlipkartLanding() {
   );
 }
 
-function CategoryIcon({ icon, bg }) {
+function CategoryIcon({ image, label }) {
   return (
-    <span
-      className={`h-10 w-10 rounded-lg ${bg} border border-line flex items-center justify-center text-[22px] leading-none shadow-card`}
-      aria-hidden="true"
-    >
-      {icon}
+    <span className="h-11 w-11 rounded-lg border border-line bg-white shadow-card overflow-hidden flex items-center justify-center">
+      <img src={image} alt="" className="h-full w-full object-cover" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
     </span>
   );
 }
