@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import ProductTabs from "../components/ProductTabs";
 
 const categories = [
-  { label: "For You", icon: "bag" },
-  { label: "Fashion", icon: "tee" },
-  { label: "Mobiles", icon: "phone" },
-  { label: "Electronics", icon: "laptop" },
-  { label: "Beauty", icon: "bottle" },
-  { label: "Home", icon: "lamp" },
-  { label: "Appliances", icon: "screen" },
-  { label: "Travel", icon: "plane" },
+  { label: "For You", icon: "🛍", bg: "bg-[#EAF4FF]" },
+  { label: "Fashion", icon: "👕", bg: "bg-[#FFF6D8]" },
+  { label: "Mobiles", icon: "📱", bg: "bg-[#EAF8EF]" },
+  { label: "Electronics", icon: "💻", bg: "bg-[#EEF3FF]" },
+  { label: "Beauty", icon: "💄", bg: "bg-[#FFEAF2]" },
+  { label: "Home", icon: "💡", bg: "bg-[#FFF1DF]" },
+  { label: "Appliances", icon: "📺", bg: "bg-[#F0F2F5]" },
+  { label: "Travel", icon: "✈", bg: "bg-[#E7F6FF]" },
 ];
 
 const promoCards = [
@@ -81,7 +81,7 @@ export default function FlipkartLanding() {
                   <div
                     className="relative h-full min-w-[76px] flex flex-col items-center justify-center gap-1 text-sm font-bold text-ink transition hover:text-bottle"
                   >
-                    <CategoryIcon type={category.icon} />
+                    <CategoryIcon icon={category.icon} bg={category.bg} />
                     <span>{category.label}</span>
                     {category.label === "For You" && <span className="absolute bottom-0 h-1 w-full rounded-t bg-bottle" />}
                   </div>
@@ -152,14 +152,13 @@ export default function FlipkartLanding() {
   );
 }
 
-function CategoryIcon({ type }) {
-  const base = "mx-auto h-8 w-8 rounded-md border-2 border-muted/75 bg-white";
-  if (type === "phone") return <div className={`${base} w-5 rounded`} />;
-  if (type === "laptop") return <div className="mx-auto mt-1 h-7 w-10 rounded-sm border-2 border-muted/75 border-b-4" />;
-  if (type === "tee") return <div className="mx-auto mt-1 h-8 w-8 rounded-t-lg border-2 border-muted/75" />;
-  if (type === "bottle") return <div className={`${base} w-4 rounded-full`} />;
-  if (type === "lamp") return <div className="mx-auto mt-1 h-8 w-8 border-b-2 border-muted/75 before:block before:h-5 before:w-7 before:border-2 before:border-muted/75 before:rounded-t-full" />;
-  if (type === "screen") return <div className="mx-auto mt-1 h-7 w-10 rounded-sm border-2 border-muted/75" />;
-  if (type === "plane") return <div className="text-2xl leading-none">✈</div>;
-  return <div className={`${base} before:block before:mx-auto before:mt-1 before:h-2 before:w-4 before:rounded-b-full before:border-2 before:border-muted/75`} />;
+function CategoryIcon({ icon, bg }) {
+  return (
+    <span
+      className={`h-10 w-10 rounded-lg ${bg} border border-line flex items-center justify-center text-[22px] leading-none shadow-card`}
+      aria-hidden="true"
+    >
+      {icon}
+    </span>
+  );
 }
