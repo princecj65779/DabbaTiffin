@@ -1,12 +1,12 @@
 databases:
-  - name: dabbatiffin-db
+  - name: flipkart-bites-db
     plan: free
-    databaseName: dabbatiffin
-    user: dabbatiffin
+    databaseName: flipkart_bites
+    user: flipkart_bites
 
 services:
   - type: web
-    name: dabbatiffin-api
+    name: flipkart-bites-api
     runtime: python
     plan: free
     rootDir: backend
@@ -15,26 +15,26 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: dabbatiffin-db
+          name: flipkart-bites-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_MINUTES
         value: "43200"
       - key: CORS_ORIGINS
-        value: https://dabbatiffin.onrender.com
+        value: https://flipkart-bites.onrender.com
       - key: PYTHON_VERSION
         value: 3.11.9
 
   - type: web
-    name: dabbatiffin
+    name: flipkart-bites
     runtime: static
     rootDir: frontend
-    buildCommand: (pip install -r ../scripts/requirements.txt && python3 ../scripts/fetch_dish_images.py) || true; npm install && npm run build
+    buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://dabbatiffin-api.onrender.com
+        value: https://flipkart-bites-api.onrender.com
     routes:
       - type: rewrite
         source: /*
