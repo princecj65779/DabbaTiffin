@@ -1,11 +1,5 @@
 import { Link } from "react-router-dom";
-
-const topTabs = [
-  { label: "Flipkart", icon: "f", active: true, to: "/flipkart" },
-  { label: "Minutes", icon: "🛵", active: false, to: "/flipkart" },
-  { label: "Travel", icon: "✈", active: false, to: "/flipkart" },
-  { label: "Bites", icon: "🍱", active: false, to: "/home", highlight: true },
-];
+import ProductTabs from "../components/ProductTabs";
 
 const categories = [
   { label: "For You", icon: "🛍" },
@@ -51,25 +45,7 @@ export default function FlipkartLanding() {
       <div className="max-w-[1440px] mx-auto px-5 py-4 md:px-8">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="w-full md:w-auto flex gap-2 md:gap-3 overflow-x-auto pb-1">
-              {topTabs.map((tab) => {
-                const className = tab.active
-                  ? "bg-saffron text-ink shadow-card"
-                  : tab.highlight
-                  ? "bg-bottle text-white shadow-card hover:bg-bottle-dark"
-                  : "bg-surface text-ink hover:bg-canvas";
-                return (
-                  <Link
-                    key={tab.label}
-                    to={tab.to}
-                    className={`h-11 min-w-[78px] md:min-w-[132px] rounded-lg flex items-center justify-center gap-1.5 md:gap-2 px-2 md:px-5 text-xs md:text-sm font-extrabold transition ${className}`}
-                  >
-                    <span className={tab.label === "Flipkart" ? "text-2xl italic text-bottle" : "text-lg"}>{tab.icon}</span>
-                    {tab.label}
-                  </Link>
-                );
-              })}
-            </div>
+            <ProductTabs active="Flipkart" />
             <div className="ml-auto flex items-center gap-4 text-sm">
               <span className="font-bold text-ink">Location not set</span>
               <button className="font-extrabold text-bottle">Select delivery location</button>

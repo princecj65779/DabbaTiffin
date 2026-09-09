@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import Logo from "./Logo";
+import ProductTabs from "./ProductTabs";
 import { useAuth } from "../context/AuthContext";
 
 const BITES_LINKS = [
@@ -16,30 +17,22 @@ export default function TopNav() {
 
   return (
     <header className="hidden md:block bg-white shadow-card sticky top-0 z-30">
-      <div className="bg-bottle text-white">
-        <div className="max-w-7xl mx-auto h-[68px] px-8 flex items-center gap-6">
-          <NavLink to="/home" className="flex-none">
-            <Logo />
-          </NavLink>
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto min-h-[76px] px-8 py-3 flex items-center gap-6">
+          <ProductTabs active="Bites" className="flex-none" />
           <div className="flex-1 max-w-3xl">
-            <div className="bg-white h-11 rounded-sm flex items-center px-4 text-sm text-muted shadow-sm">
+            <div className="bg-white h-11 rounded-lg border-2 border-bottle flex items-center px-4 text-sm text-muted shadow-sm">
               <span className="mr-3 text-bottle font-extrabold">Search</span>
               Search Bites meals, cuisines, plans and batch points
             </div>
           </div>
-          <NavLink
-            to="/flipkart"
-            className="text-[13px] font-extrabold text-white/90 hover:text-saffron whitespace-nowrap"
-          >
-            Flipkart
-          </NavLink>
-          <div className="text-[13px] whitespace-nowrap leading-tight">
-            <span className="opacity-85">Delivering to</span>{" "}
-            <strong className="block">{user?.delivery_point?.name || "Set your point"}</strong>
+          <div className="text-[13px] whitespace-nowrap leading-tight text-ink">
+            <span className="text-mutedwarm">Delivering to</span>{" "}
+            <strong className="block text-bottle">{user?.delivery_point?.name || "Set your point"}</strong>
           </div>
           <NavLink
             to="/profile"
-            className="w-9 h-9 rounded-full bg-saffron flex items-center justify-center text-[13px] font-extrabold text-ink"
+            className="w-10 h-10 rounded-full bg-saffron flex items-center justify-center text-[13px] font-extrabold text-ink"
           >
             {initial}
           </NavLink>
@@ -47,7 +40,9 @@ export default function TopNav() {
       </div>
       <div className="border-b border-line">
         <div className="max-w-7xl mx-auto h-14 px-8 flex items-center gap-8 text-sm font-bold text-ink">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-mutedwarm">Flipkart Bites</div>
+          <NavLink to="/home" className="flex-none w-[154px] flex items-center">
+            <Logo size="nav" onDark={false} />
+          </NavLink>
           <div className="flex items-center gap-8">
             {BITES_LINKS.map((link) => (
               <NavLink
