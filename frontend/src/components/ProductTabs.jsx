@@ -21,9 +21,9 @@ export default function ProductTabs({ active = "Flipkart", className = "" }) {
           <Link
             key={tab.label}
             to={tab.to}
-            className={`h-11 min-w-[78px] md:min-w-[132px] rounded-lg flex items-center justify-center gap-1.5 md:gap-2 px-2 md:px-5 text-xs md:text-sm font-extrabold transition ${className}`}
+            className={`h-12 min-w-[86px] md:min-w-[148px] rounded-lg flex items-center justify-center gap-2 px-3 md:px-5 text-sm font-extrabold leading-none transition ${className}`}
           >
-            <span className={tab.label === "Flipkart" ? "text-2xl italic text-bottle" : "text-lg"}>{tab.icon}</span>
+            <span className={tab.label === "Flipkart" ? "text-2xl italic text-bottle leading-none" : "text-lg leading-none"}>{tab.icon}</span>
             {tab.label}
           </Link>
         );
