@@ -65,7 +65,7 @@ export default function MockPaymentModal({ amount, onSuccess, onClose }) {
         <div className="p-5 flex flex-col gap-4">
           <div className="bg-cream/60 border border-saffron/40 rounded-lg p-3 text-[12px] text-bottle-dark leading-relaxed">
             <strong>Demo details:</strong> Card {DEMO_CARD.number} · Expiry {DEMO_CARD.expiry} · CVV {DEMO_CARD.cvv} · OTP {DEMO_CARD.otp}
-            <button type="button" onClick={useDemo} className="ml-1 font-extrabold text-saffron underline">Use it</button>
+            <button type="button" onClick={useDemo} className="ml-1 font-extrabold text-flipkart-orange underline">Use it</button>
           </div>
 
           <div className="flex justify-between items-center text-sm font-extrabold text-ink">

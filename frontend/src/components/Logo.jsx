@@ -1,11 +1,11 @@
 export default function Logo({ size = "md", onDark = true }) {
-  const boxSize = size === "lg" ? "w-9 h-9" : "w-7 h-7";
-  const textSize = size === "lg" ? "text-2xl" : "text-lg";
+  const imageSize = size === "lg" ? "h-20 w-auto" : "h-11 w-auto";
+  const fallbackText = size === "lg" ? "text-[28px]" : "text-lg";
   return (
-    <div className="flex items-center gap-2.5">
-      <div className={`${boxSize} rounded-[9px] bg-saffron flex-none`} />
-      <div className={`${textSize} font-extrabold ${onDark ? "text-white" : "text-bottle-dark"}`}>
-        Dabba<span className={onDark ? "text-cream" : "text-saffron"}>Tiffin</span>
+    <div className="flex items-center gap-2.5" aria-label="Flipkart Bites">
+      <img src={`${import.meta.env.BASE_URL}flipkart-bites-logo-transparent.png`} alt="Flipkart Bites" className={imageSize} />
+      <div className={`sr-only ${fallbackText} font-extrabold ${onDark ? "text-white" : "text-bottle-dark"}`}>
+        Flipkart Bites
       </div>
     </div>
   );

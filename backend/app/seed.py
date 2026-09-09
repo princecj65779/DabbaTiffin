@@ -20,12 +20,26 @@ DEMO_PASSWORD = "Dabba@123"
 DISHES = [
     # slug, name, description, kcal, meal types it can appear in
     ("poha", "Poha with sev", "Poha base, peanuts, lemon", 320, ["breakfast"]),
+    ("jain-poha", "Jain poha", "No onion, no garlic, peanuts, lemon", 300, ["breakfast"]),
     ("upma", "Upma", "Upma base, curry leaf, coconut", 290, ["breakfast"]),
     ("idli-sambhar", "Idli with sambhar", "3 idli, sambhar, chutney", 340, ["breakfast"]),
+    ("masala-dosa-tiffin", "Masala dosa tiffin", "Dosa, potato masala, sambhar", 430, ["breakfast"]),
+    ("thepla-curd", "Thepla with curd", "Gujarati thepla, curd, pickle", 360, ["breakfast"]),
+    ("paneer-paratha", "Paneer paratha", "Paneer paratha, curd, pickle", 460, ["breakfast"]),
+    ("sprouts-bowl", "Sprouts bowl", "Moong sprouts, cucumber, lemon", 260, ["breakfast"]),
     ("sabudana-khichdi", "Sabudana khichdi", "Sago, peanuts, potato", 300, ["breakfast"]),
     ("misal-pav", "Misal pav", "Misal, pav, onion", 410, ["breakfast"]),
     ("rajma-chawal", "Rajma chawal", "Rajma, steamed rice, salad", 420, ["lunch"]),
     ("chole-chawal", "Chole chawal", "Chole, steamed rice, salad", 400, ["lunch"]),
+    ("jain-thali", "Jain mini thali", "No onion/garlic sabzi, dal, roti, rice", 520, ["lunch"]),
+    ("gujarati-thali", "Gujarati mini thali", "Dal, shaak, roti, rice, pickle", 540, ["lunch"]),
+    ("khichdi-kadhi", "Khichdi kadhi", "Moong dal khichdi, kadhi, papad", 470, ["lunch"]),
+    ("dal-dhokli", "Dal dhokli", "Gujarati dal, wheat dhokli, ghee", 510, ["lunch"]),
+    ("dal-makhani-rice", "Dal makhani rice", "Dal makhani, steamed rice, salad", 560, ["lunch"]),
+    ("curd-rice", "Curd rice", "Curd rice, tempering, pickle", 390, ["lunch"]),
+    ("lemon-rice", "Lemon rice", "Lemon rice, peanuts, curd cup", 410, ["lunch"]),
+    ("millet-khichdi", "Millet khichdi", "Millet, moong dal, vegetables", 430, ["lunch"]),
+    ("varan-bhaat", "Varan bhaat", "Maharashtrian dal rice, ghee, lemon", 450, ["lunch"]),
 ]
 
 DELIVERY_POINTS = [
@@ -109,8 +123,31 @@ PLANS = [
     ),
 ]
 
-BREAKFAST_PRICES = {"poha": 49, "upma": 49, "idli-sambhar": 55, "sabudana-khichdi": 59, "misal-pav": 59}
-LUNCH_PRICES = {"rajma-chawal": 89, "chole-chawal": 89}
+BREAKFAST_PRICES = {
+    "poha": 49,
+    "jain-poha": 52,
+    "upma": 49,
+    "idli-sambhar": 55,
+    "masala-dosa-tiffin": 69,
+    "thepla-curd": 59,
+    "paneer-paratha": 75,
+    "sprouts-bowl": 65,
+    "sabudana-khichdi": 59,
+    "misal-pav": 59,
+}
+LUNCH_PRICES = {
+    "rajma-chawal": 89,
+    "chole-chawal": 89,
+    "jain-thali": 99,
+    "gujarati-thali": 109,
+    "khichdi-kadhi": 85,
+    "dal-dhokli": 95,
+    "dal-makhani-rice": 99,
+    "curd-rice": 79,
+    "lemon-rice": 79,
+    "millet-khichdi": 89,
+    "varan-bhaat": 85,
+}
 
 
 def _seed_dishes(db: Session) -> dict[str, models.Dish]:
@@ -158,19 +195,40 @@ def _seed_plans(db: Session) -> dict[str, models.SubscriptionPlan]:
 
 def _rotating_dishes_for(day_index: int, meal: str, dishes: dict[str, models.Dish]):
     if meal == "breakfast":
-        rotation = ["poha", "upma", "idli-sambhar", "misal-pav", "sabudana-khichdi"]
-        offer = [rotation[(day_index + i) % len(rotation)] for i in range(3)]
+        rotation = [
+            "poha",
+            "jain-poha",
+            "upma",
+            "idli-sambhar",
+            "masala-dosa-tiffin",
+            "thepla-curd",
+            "paneer-paratha",
+            "sprouts-bowl",
+            "misal-pav",
+            "sabudana-khichdi",
+        ]
+        offer = [rotation[(day_index + i) % len(rotation)] for i in range(7)]
         # sabudana khichdi is always shown but marked sold out, matching the mockup
         if "sabudana-khichdi" not in offer:
             offer.append("sabudana-khichdi")
         return offer
-    return ["rajma-chawal", "chole-chawal"]
+    rotation = [
+        "rajma-chawal",
+        "chole-chawal",
+        "jain-thali",
+        "gujarati-thali",
+        "khichdi-kadhi",
+        "dal-dhokli",
+        "dal-makhani-rice",
+        "curd-rice",
+        "lemon-rice",
+        "millet-khichdi",
+        "varan-bhaat",
+    ]
+    return [rotation[(day_index + i) % len(rotation)] for i in range(8)]
 
 
 def _seed_menus(db: Session, dishes: dict[str, models.Dish]) -> None:
-    existing = db.query(models.DailyMenu).first()
-    if existing:
-        return
     today = date.today()
     for day_index in range(-2, 8):  # a couple of past days + today + next week
         d = today + timedelta(days=day_index)
@@ -179,6 +237,17 @@ def _seed_menus(db: Session, dishes: dict[str, models.Dish]) -> None:
         for meal in ["breakfast", "lunch"]:
             slugs = _rotating_dishes_for(day_index, meal, dishes)
             for i, slug in enumerate(slugs):
+                exists = (
+                    db.query(models.DailyMenu)
+                    .filter(
+                        models.DailyMenu.date == d,
+                        models.DailyMenu.meal_type == models.MealType(meal),
+                        models.DailyMenu.dish_id == dishes[slug].id,
+                    )
+                    .first()
+                )
+                if exists:
+                    continue
                 price = (BREAKFAST_PRICES if meal == "breakfast" else LUNCH_PRICES).get(slug, 55)
                 sold_out = slug == "sabudana-khichdi"
                 db.add(

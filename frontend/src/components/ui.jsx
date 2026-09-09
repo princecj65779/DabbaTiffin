@@ -1,13 +1,13 @@
-export function Card({ children, className = "" }) {
+export function Card({ children, className = "", ...props }) {
   return (
-    <div className={`bg-white rounded-xl2 shadow-card ${className}`}>{children}</div>
+    <div className={`bg-white rounded-xl2 shadow-card ${className}`} {...props}>{children}</div>
   );
 }
 
 export function PrimaryButton({ children, className = "", ...props }) {
   return (
     <button
-      className={`bg-saffron text-white text-center py-4 rounded-lg font-extrabold disabled:opacity-50 ${className}`}
+      className={`bg-flipkart-orange text-white text-center py-4 rounded font-extrabold disabled:opacity-50 ${className}`}
       {...props}
     >
       {children}
@@ -18,7 +18,7 @@ export function PrimaryButton({ children, className = "", ...props }) {
 export function OutlineButton({ children, className = "", ...props }) {
   return (
     <button
-      className={`border border-bottle text-bottle text-center py-3.5 rounded-lg font-extrabold disabled:opacity-50 ${className}`}
+      className={`border border-bottle text-bottle text-center py-3.5 rounded font-extrabold disabled:opacity-50 ${className}`}
       {...props}
     >
       {children}
@@ -29,7 +29,7 @@ export function OutlineButton({ children, className = "", ...props }) {
 export function DarkButton({ children, className = "", ...props }) {
   return (
     <button
-      className={`bg-bottle text-white text-center py-4 rounded-lg font-extrabold disabled:opacity-50 ${className}`}
+      className={`bg-bottle text-white text-center py-4 rounded font-extrabold disabled:opacity-50 ${className}`}
       {...props}
     >
       {children}
@@ -40,7 +40,7 @@ export function DarkButton({ children, className = "", ...props }) {
 export function Notice({ children, className = "" }) {
   return (
     <div
-      className={`bg-warnbg border border-dashed border-warnborder rounded-lg p-3 text-[12px] text-warntext leading-relaxed ${className}`}
+      className={`bg-warnbg border border-dashed border-warnborder rounded p-3 text-[12px] text-warntext leading-relaxed ${className}`}
     >
       {children}
     </div>
@@ -73,7 +73,7 @@ export function Field({ label, children }) {
 export function TextInput(props) {
   return (
     <input
-      className="border border-line rounded-lg px-3 py-3.5 text-sm focus:outline-none focus:border-bottle bg-white"
+      className="border border-line rounded px-3 py-3.5 text-sm focus:outline-none focus:border-bottle bg-white"
       {...props}
     />
   );

@@ -4,11 +4,62 @@
 
 html,
 body {
-  background: #ede8e2;
-  font-family: "Manrope", Helvetica, Arial, sans-serif;
+  background: #f1f3f6;
+  font-family: Inter, Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: #24543d;
+  color: #2874f0;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(40, 116, 240, 0.24);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(40, 116, 240, 0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 420ms ease both;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 1800ms ease-in-out infinite;
+}
+
+.smooth-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.smooth-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(23, 35, 55, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-soft-pulse {
+    animation: none;
+  }
+
+  .smooth-card,
+  .smooth-card:hover {
+    transform: none;
+    transition: none;
+  }
 }

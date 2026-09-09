@@ -1,6 +1,7 @@
 """Fetch real dish photos from Wikimedia Commons (freely licensed) into
-frontend/public/dishes/. Falls back to a generated placeholder per dish if a
-network call fails, so the app always has *some* image to render.
+frontend/public/dishes/. Falls back to a generated placeholder only when a
+dish has no existing image, so custom app photos are not overwritten if a
+network call fails.
 
 Run this locally, or as part of the Render build command (see render.yaml) —
 Render's build servers have normal internet access even in environments where
@@ -26,10 +27,25 @@ COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 # slug -> (search query on Commons, dish display name, placeholder base color)
 DISHES: dict[str, tuple[str, str, str]] = {
     "upma": ("Rava upma South Indian breakfast", "Upma", "#EDE7DA"),
+    "jain-poha": ("Poha Indian breakfast", "Jain poha", "#EFE8D4"),
     "idli-sambhar": ("Idli sambar chutney", "Idli with sambhar", "#E7EDE3"),
+    "masala-dosa-tiffin": ("Masala dosa sambar chutney", "Masala dosa tiffin", "#E9E0D2"),
+    "thepla-curd": ("Gujarati thepla curd", "Thepla with curd", "#ECE4D4"),
+    "paneer-paratha": ("Paneer paratha curd", "Paneer paratha", "#EFE2D4"),
+    "sprouts-bowl": ("Moong sprouts salad Indian", "Sprouts bowl", "#E7EFEA"),
     "sabudana-khichdi": ("Sabudana khichdi", "Sabudana khichdi", "#E9E4DA"),
     "misal-pav": ("Misal pav Maharashtrian dish", "Misal pav", "#F0E3D6"),
     "rajma-chawal": ("Rajma chawal kidney beans rice", "Rajma chawal", "#E7EFEA"),
+    "chole-chawal": ("Chole chawal chickpea curry rice", "Chole chawal", "#EFE4D8"),
+    "jain-thali": ("Jain thali Indian food", "Jain mini thali", "#EDE6D8"),
+    "gujarati-thali": ("Gujarati thali Indian meal", "Gujarati mini thali", "#EFE5D8"),
+    "khichdi-kadhi": ("Khichdi kadhi Gujarati", "Khichdi kadhi", "#EFE9D9"),
+    "dal-dhokli": ("Dal dhokli Gujarati dish", "Dal dhokli", "#E8DFD0"),
+    "dal-makhani-rice": ("Dal makhani rice", "Dal makhani rice", "#E5D8CD"),
+    "curd-rice": ("Curd rice South Indian", "Curd rice", "#ECEBE2"),
+    "lemon-rice": ("Lemon rice South Indian", "Lemon rice", "#EFE8C8"),
+    "millet-khichdi": ("Millet khichdi Indian", "Millet khichdi", "#E8E4D7"),
+    "varan-bhaat": ("Varan bhaat Maharashtrian dal rice", "Varan bhaat", "#EFE7D3"),
 }
 
 TARGET_WIDTH = 640
@@ -121,6 +137,9 @@ def main() -> None:
         dest = OUT_DIR / f"{slug}.jpg"
         print(f"Fetching {slug} ...")
         if not download_real_photo(slug, query, dest):
+            if dest.exists():
+                print(f"  [keep] preserving existing image for {slug}")
+                continue
             draw_placeholder(slug, label, color, dest)
     print(f"\nDone. Images written to {OUT_DIR}")
 

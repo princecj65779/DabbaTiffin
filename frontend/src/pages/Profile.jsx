@@ -28,7 +28,7 @@ export default function Profile() {
   return (
     <AppShell>
       <div className="bg-bottle text-white px-5 py-5 md:px-10 md:py-8 flex gap-3.5 items-center">
-        <div className="w-[52px] h-[52px] rounded-full bg-saffron flex items-center justify-center text-xl font-extrabold flex-none">
+        <div className="w-[52px] h-[52px] rounded-full bg-saffron text-ink flex items-center justify-center text-xl font-extrabold flex-none">
           {user.full_name[0]?.toUpperCase()}
         </div>
         <div>
@@ -37,7 +37,8 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-4 flex flex-col gap-3">
+      <div className="max-w-5xl mx-auto p-4 md:p-8 grid md:grid-cols-[1fr_320px] gap-4 items-start">
+        <div className="flex flex-col gap-3">
         <Card className="overflow-hidden">
           <div className="px-4 py-3.5 border-b border-[#F0ECE7]">
             <div className="text-[11px] font-extrabold text-muted tracking-wide">DELIVERY POINT</div>
@@ -86,7 +87,55 @@ export default function Profile() {
         <OutlineButton onClick={signOut} className="border-line text-muted">
           Log out
         </OutlineButton>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Card className="p-4 border border-line">
+            <div className="text-sm font-extrabold text-ink">Smart meal defaults</div>
+            <div className="mt-3 grid gap-3">
+              <Preference title="Auto-pick if I forget" value="Most popular veg dish" />
+              <Preference title="Repeat control" value="Avoid same main twice in 3 days" />
+              <Preference title="Spice profile" value="Medium spice" />
+              <Preference title="Diet flag" value={user.veg_only ? "Veg only active" : "Open to all"} />
+            </div>
+          </Card>
+
+          <Card className="p-4 border border-line">
+            <div className="text-sm font-extrabold text-ink">Trust and safety</div>
+            <div className="mt-2 text-xs leading-relaxed text-mutedwarm">
+              Add kitchen verification, preparation timestamp, packaging seal and handoff photo here for the full
+              Flipkart-grade trust layer.
+            </div>
+          </Card>
+
+          <Card className="p-4 border border-line">
+            <div className="text-sm font-extrabold text-ink">Family and roommate plans</div>
+            <div className="mt-3 grid gap-2 text-xs leading-relaxed text-mutedwarm">
+              <div><strong className="text-ink">Parent pays:</strong> student receives meals at the saved point.</div>
+              <div><strong className="text-ink">Roommate split:</strong> share one delivery point with separate preferences.</div>
+              <div><strong className="text-ink">Shared wallet:</strong> credits can apply to the next household meal.</div>
+            </div>
+          </Card>
+
+          <Card className="p-4 border border-line">
+            <div className="text-sm font-extrabold text-ink">Campus / office admin</div>
+            <div className="mt-3 grid gap-2 text-xs leading-relaxed text-mutedwarm">
+              <div><strong className="text-ink">Confirmed meals:</strong> 42 for tomorrow.</div>
+              <div><strong className="text-ink">Roster:</strong> export by floor, team or hostel block.</div>
+              <div><strong className="text-ink">Billing:</strong> monthly invoice or partial HR subsidy.</div>
+            </div>
+          </Card>
+        </div>
       </div>
     </AppShell>
+  );
+}
+
+function Preference({ title, value }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-line pb-2 last:border-b-0 last:pb-0">
+      <div className="text-xs font-bold text-mutedwarm">{title}</div>
+      <div className="text-xs font-extrabold text-ink text-right">{value}</div>
+    </div>
   );
 }

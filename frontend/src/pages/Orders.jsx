@@ -31,29 +31,39 @@ export default function Orders() {
   return (
     <AppShell>
       <div className="bg-bottle text-white px-5 pt-4 pb-5 md:px-10 md:py-7">
-        <div className="text-lg md:text-2xl font-extrabold">Orders</div>
-        <div className="flex gap-3 mt-3.5 max-w-md">
-          <div className="bg-white/15 rounded-lg p-3 flex-1">
-            <div className="text-lg font-extrabold">{money(data.spent_this_month)}</div>
-            <div className="text-[11px] opacity-85 font-bold mt-0.5">THIS MONTH</div>
-          </div>
-          <div className="bg-white/15 rounded-lg p-3 flex-1">
-            <div className="text-lg font-extrabold">{data.meals_eaten_this_month}</div>
-            <div className="text-[11px] opacity-85 font-bold mt-0.5">MEALS EATEN</div>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-[11px] font-extrabold tracking-wide text-saffron uppercase">Bites activity</div>
+          <div className="mt-1 text-lg md:text-3xl font-extrabold">Orders and savings</div>
+          <div className="flex gap-3 mt-4 max-w-md">
+            <div className="bg-white/15 rounded p-3 flex-1">
+              <div className="text-lg font-extrabold">{money(data.spent_this_month)}</div>
+              <div className="text-[11px] opacity-85 font-bold mt-0.5">THIS MONTH</div>
+            </div>
+            <div className="bg-white/15 rounded p-3 flex-1">
+              <div className="text-lg font-extrabold">{data.meals_eaten_this_month}</div>
+              <div className="text-[11px] opacity-85 font-bold mt-0.5">MEALS EATEN</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-4 md:p-8 flex flex-col gap-3">
-        <Card className="overflow-hidden">
+      <div className="max-w-5xl mx-auto p-4 md:p-8 grid md:grid-cols-[1fr_300px] gap-4 items-start">
+        <Card className="overflow-hidden border border-line">
+          <div className="px-4 py-3 border-b border-line flex items-center justify-between">
+            <div>
+              <div className="text-sm font-extrabold text-ink">Recent tiffin orders</div>
+              <div className="text-xs text-muted mt-0.5">Delivered, skipped and refunded meals.</div>
+            </div>
+            <div className="text-[11px] font-extrabold text-bottle bg-surface px-2.5 py-1.5 rounded">BATCH</div>
+          </div>
           {data.orders.map((order, i) => (
             <div
               key={order.id}
               className={`px-4 py-3.5 flex gap-3 items-center ${
-                i < data.orders.length - 1 ? "border-b border-[#F0ECE7]" : ""
+                i < data.orders.length - 1 ? "border-b border-line" : ""
               }`}
             >
-              <div className="w-10 h-10 rounded-lg bg-canvas flex-none overflow-hidden">
+              <div className="w-12 h-12 rounded bg-canvas flex-none overflow-hidden">
                 <DishThumb name={order.dish_name} />
               </div>
               <div className="flex-1">
@@ -75,20 +85,23 @@ export default function Orders() {
           )}
         </Card>
 
-        <Card className="p-4 flex justify-between items-center">
-          <div>
-            <div className="text-sm font-extrabold">Tiffin wallet</div>
-            <div className="text-xs text-muted mt-0.5">From skipped meals</div>
-          </div>
-          <div className="text-lg font-extrabold text-bottle-dark">{money(data.wallet_balance)}</div>
-        </Card>
+        <div className="flex flex-col gap-4">
+          <Card className="p-4 flex justify-between items-center border border-line">
+            <div>
+              <div className="text-sm font-extrabold">Bites wallet</div>
+              <div className="text-xs text-muted mt-0.5">Credits from skipped meals</div>
+            </div>
+            <div className="text-lg font-extrabold text-bottle-dark">{money(data.wallet_balance)}</div>
+          </Card>
 
-        <Card className="p-4 text-[13px] text-mutedwarm leading-relaxed">
-          Mess average in your area is ₹3,000–4,000 a month. You are at{" "}
-          <strong className="text-ink">{money(data.spent_this_month)}</strong> so far.
-        </Card>
+          <Card className="p-4 text-[13px] text-mutedwarm leading-relaxed border border-line">
+            <div className="text-sm font-extrabold text-ink mb-1">Monthly benchmark</div>
+            Mess average in your area is ₹3,000-4,000 a month. You are at{" "}
+            <strong className="text-ink">{money(data.spent_this_month)}</strong> so far.
+          </Card>
 
-        <OutlineButton>Download invoices</OutlineButton>
+          <OutlineButton>Download invoices</OutlineButton>
+        </div>
       </div>
     </AppShell>
   );

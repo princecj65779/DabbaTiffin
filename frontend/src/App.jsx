@@ -16,11 +16,13 @@ import Plans from "./pages/Plans";
 import Skip from "./pages/Skip";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
+import EmptyFlipkartTab from "./pages/EmptyFlipkartTab";
+import FlipkartLanding from "./pages/FlipkartLanding";
 
 function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return <Navigate to={user ? "/home" : "/login"} replace />;
+  return <Navigate to={user ? "/flipkart" : "/login"} replace />;
 }
 
 export default function App() {
@@ -41,12 +43,19 @@ export default function App() {
               }
             />
             <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/bites" element={<ProtectedRoute><Navigate to="/home" replace /></ProtectedRoute>} />
+            <Route path="/flipkart" element={<ProtectedRoute><FlipkartLanding /></ProtectedRoute>} />
+            <Route path="/grocery" element={<ProtectedRoute><EmptyFlipkartTab title="Grocery" /></ProtectedRoute>} />
+            <Route path="/mobiles" element={<ProtectedRoute><EmptyFlipkartTab title="Mobiles" /></ProtectedRoute>} />
+            <Route path="/fashion" element={<ProtectedRoute><EmptyFlipkartTab title="Fashion" /></ProtectedRoute>} />
+            <Route path="/appliances" element={<ProtectedRoute><EmptyFlipkartTab title="Appliances" /></ProtectedRoute>} />
             <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
             <Route path="/booking" element={<ProtectedRoute><BookingReview /></ProtectedRoute>} />
             <Route path="/confirmation/:bookingId" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
             <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
             <Route path="/tracking/:orderId" element={<ProtectedRoute><Tracking /></ProtectedRoute>} />
             <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+            <Route path="/calendar" element={<ProtectedRoute><Skip /></ProtectedRoute>} />
             <Route path="/skip" element={<ProtectedRoute><Skip /></ProtectedRoute>} />
             <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

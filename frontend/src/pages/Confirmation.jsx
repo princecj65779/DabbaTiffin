@@ -29,7 +29,7 @@ export default function Confirmation() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="bg-bottle-dark text-white px-6 py-9 text-center md:py-14">
-        <div className="w-16 h-16 rounded-full bg-saffron flex items-center justify-center text-3xl font-extrabold mx-auto mb-5">
+        <div className="w-16 h-16 rounded-full bg-saffron text-ink flex items-center justify-center text-3xl font-extrabold mx-auto mb-5">
           ✓
         </div>
         <div className="text-2xl font-extrabold">Tomorrow is sorted</div>

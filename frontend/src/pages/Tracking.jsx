@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
+import AppShell from "../components/AppShell";
 import { Card, OutlineButton } from "../components/ui";
 
 export default function Tracking() {
@@ -25,21 +26,25 @@ export default function Tracking() {
   const { order, steps } = data;
 
   return (
-    <div className="min-h-screen bg-surface">
+    <AppShell>
       <div className="bg-bottle text-white px-5 pt-4 pb-5 md:px-10 md:py-7">
-        <button onClick={() => navigate(-1)} className="text-xl font-extrabold">
-          ← {order.meal_type === "lunch" ? "Lunch" : "Breakfast"} today
-        </button>
-        <div className="text-2xl md:text-[28px] font-extrabold mt-2.5">
-          {order.status === "handed_over" ? "Handed over" : `Arrives ${order.slot_window}`}
-        </div>
-        <div className="text-sm opacity-90 mt-1">
-          {order.dish_name} · batch {data.batch_code}
+        <div className="max-w-5xl mx-auto">
+          <button onClick={() => navigate(-1)} className="text-xl font-extrabold">
+            ← {order.meal_type === "lunch" ? "Lunch" : "Breakfast"} today
+          </button>
+          <div className="text-2xl md:text-[28px] font-extrabold mt-2.5">
+            {order.status === "handed_over" ? "Handed over" : `Arrives ${order.slot_window}`}
+          </div>
+          <div className="text-sm opacity-90 mt-1">
+            {order.dish_name} · batch {data.batch_code}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-4 flex flex-col gap-3.5">
-        <Card className="p-4.5 p-4">
+      <div className="max-w-5xl mx-auto px-4 py-4 grid md:grid-cols-[1fr_320px] gap-4 items-start">
+        <div className="flex flex-col gap-3.5">
+        <Card className="p-4">
+          <div className="text-sm font-extrabold text-ink mb-4">Freshness timeline</div>
           {steps.map((step, i) => (
             <div key={step.label} className="flex gap-3.5">
               <div className="flex flex-col items-center flex-none">
@@ -90,7 +95,26 @@ export default function Tracking() {
         >
           {reported ? "Issue reported" : "Report an issue"}
         </OutlineButton>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Card className="p-4 border border-line">
+            <div className="text-sm font-extrabold text-ink">Kitchen transparency</div>
+            <div className="mt-3 grid gap-2 text-xs leading-relaxed text-mutedwarm">
+              <div><strong className="text-ink">Kitchen:</strong> Verified partner, Kothrud cluster.</div>
+              <div><strong className="text-ink">Packed:</strong> 12:24 with sealed batch code.</div>
+              <div><strong className="text-ink">Inspection:</strong> Hygiene checklist passed today.</div>
+              <div><strong className="text-ink">Rating:</strong> 4.4 from this delivery point.</div>
+            </div>
+          </Card>
+          <Card className="p-4 border border-line">
+            <div className="text-sm font-extrabold text-ink">Bites Assured</div>
+            <div className="mt-2 text-xs leading-relaxed text-mutedwarm">
+              Late batch, wrong meal, broken seal or missed handoff can trigger wallet credit from this order screen.
+            </div>
+          </Card>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

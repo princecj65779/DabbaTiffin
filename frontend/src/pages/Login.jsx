@@ -41,13 +41,16 @@ export default function Login() {
         <div className="bg-bottle text-white px-6 py-9 md:w-[480px] md:px-12 md:py-14 md:flex md:flex-col">
           <Logo size="lg" />
           <div className="mt-6 md:mt-auto">
+            <div className="inline-flex bg-white/15 text-saffron px-3 py-1 rounded text-xs font-extrabold">
+              New on Flipkart
+            </div>
             <div className="text-[26px] md:text-[36px] font-extrabold leading-tight tracking-tight">
-              Your everyday
+              Meals now live
               <br />
-              breakfast and lunch
+              inside Flipkart
             </div>
             <div className="text-sm md:text-base opacity-90 mt-3 leading-relaxed max-w-[400px]">
-              Book a night before. Full price upfront. Delivered to your PG, campus or office.
+              Book breakfast or lunch a day ahead, pay one final price, and pick up from your PG, campus or office batch.
             </div>
             <div className="hidden md:flex gap-7 mt-9">
               <Stat value="₹45" label="A BREAKFAST" />
@@ -58,12 +61,15 @@ export default function Login() {
         </div>
 
         <div className="px-6 py-8 md:flex-1 md:px-20 md:py-14 md:flex md:flex-col md:justify-center">
-          <div className="bg-white rounded-xl2 shadow-card p-5 md:p-0 md:shadow-none flex flex-col gap-4 -mt-8 md:mt-0">
-            <div className="text-[17px] md:text-[26px] font-extrabold text-ink">Log in</div>
+            <div className="bg-white rounded-xl2 shadow-card p-5 md:p-0 md:shadow-none flex flex-col gap-4 -mt-8 md:mt-0">
+            <div>
+              <div className="text-[11px] font-extrabold tracking-wide text-bottle uppercase">Flipkart account</div>
+              <div className="text-[17px] md:text-[26px] font-extrabold text-ink mt-1">Log in to try Bites</div>
+            </div>
 
-            <div className="bg-cream/60 border border-saffron/40 rounded-lg p-3 text-[12px] text-bottle-dark leading-relaxed">
+            <div className="bg-cream/70 border border-saffron/70 rounded p-3 text-[12px] text-bottle-dark leading-relaxed">
               <strong>Demo account:</strong> {DEMO_EMAIL} / {DEMO_PASSWORD}{" "}
-              <button type="button" onClick={fillDemo} className="ml-1 font-extrabold text-saffron underline">
+              <button type="button" onClick={fillDemo} className="ml-1 font-extrabold text-flipkart-orange underline">
                 Use it
               </button>
             </div>
