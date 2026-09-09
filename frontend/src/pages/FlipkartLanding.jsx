@@ -19,8 +19,7 @@ const promoCards = [
     offer: "Launch 24th Sep",
     subtext: "Pure Android 16",
     tone: "bg-[#EAF7D9]",
-    accent: "bg-[#BDEB85]",
-    product: "phone",
+    image: "/flipkart/phone-launch.jpg",
   },
   {
     brand: "POCO",
@@ -28,8 +27,7 @@ const promoCards = [
     offer: "From ₹2,250/M",
     subtext: "Sale on 11th Sep, 12 PM",
     tone: "bg-[#513B25]",
-    accent: "bg-[#F7D417]",
-    product: "phones",
+    image: "/flipkart/electronics-sale.jpg",
     dark: true,
   },
   {
@@ -38,17 +36,16 @@ const promoCards = [
     offer: "Explore now",
     subtext: "Royal care for royal engines",
     tone: "bg-[#172337]",
-    accent: "bg-[#2874F0]",
-    product: "fuel",
+    image: "/flipkart/travel-deals.jpg",
     dark: true,
   },
 ];
 
 const suggestedCards = [
-  { title: "Running shoes", price: "₹919", deal: "₹781 with bank offer", product: "shoe", bg: "bg-[#F2F5F8]" },
-  { title: "Smart watches", price: "₹1,299", deal: "Hot deal", product: "watch", bg: "bg-[#EEF7F2]" },
-  { title: "Backpacks", price: "₹699", deal: "Student picks", product: "bag", bg: "bg-[#F5F0EA]" },
-  { title: "Wireless earbuds", price: "₹799", deal: "New drops", product: "earbuds", bg: "bg-[#EEF3FF]" },
+  { title: "Running shoes", price: "₹919", deal: "₹781 with bank offer", image: "/flipkart/running-shoes.jpg" },
+  { title: "Smart watches", price: "₹1,299", deal: "Hot deal", image: "/flipkart/smart-watch.jpg" },
+  { title: "Backpacks", price: "₹699", deal: "Student picks", image: "/flipkart/backpack.jpg" },
+  { title: "Wireless earbuds", price: "₹799", deal: "New drops", image: "/flipkart/earbuds.jpg" },
 ];
 
 export default function FlipkartLanding() {
@@ -105,9 +102,15 @@ export default function FlipkartLanding() {
           {promoCards.map((card, index) => (
             <button
               key={card.title}
-              className={`relative min-h-[220px] md:min-h-[250px] overflow-hidden rounded-lg ${card.tone} p-6 text-left smooth-card`}
+              className={`relative min-h-[220px] md:min-h-[250px] overflow-hidden rounded-lg ${card.tone} text-left smooth-card`}
             >
-              <div className="relative z-10 max-w-[62%]">
+              <img
+                src={card.image}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className={`absolute inset-0 ${card.dark ? "bg-gradient-to-r from-black/72 via-black/42 to-transparent" : "bg-gradient-to-r from-white/92 via-white/58 to-transparent"}`} />
+              <div className="relative z-10 max-w-[62%] p-6">
                 <div className={`inline-flex rounded px-3 py-1 text-[11px] font-extrabold ${card.dark ? "bg-saffron text-ink" : "bg-white text-bottle"}`}>
                   {card.brand}
                 </div>
@@ -116,9 +119,6 @@ export default function FlipkartLanding() {
                 </div>
                 <div className={`mt-2 text-base font-extrabold ${card.dark ? "text-white/90" : "text-ink/80"}`}>{card.offer}</div>
                 <div className={`mt-2 text-sm font-semibold ${card.dark ? "text-white/80" : "text-mutedwarm"}`}>{card.subtext}</div>
-              </div>
-              <div className="absolute bottom-0 right-0 h-full w-[42%] flex items-center justify-center">
-                <ProductVisual type={card.product} accent={card.accent} dark={card.dark} />
               </div>
               {index === 0 && (
                 <div className="absolute bottom-4 left-6 text-[11px] font-bold text-ink/55">AD</div>
@@ -137,9 +137,7 @@ export default function FlipkartLanding() {
           <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {suggestedCards.map((card) => (
               <button key={card.title} className="rounded-lg bg-white border border-line overflow-hidden text-left smooth-card">
-                <div className={`h-48 w-full ${card.bg} flex items-center justify-center`}>
-                  <ProductVisual type={card.product} compact />
-                </div>
+                <img src={card.image} alt="" className="h-48 w-full object-cover bg-surface" />
                 <div className="p-4">
                   <div className="text-sm font-extrabold text-ink truncate">{card.title}</div>
                   <div className="mt-1 text-xs text-mutedwarm">{card.deal}</div>
@@ -164,24 +162,4 @@ function CategoryIcon({ type }) {
   if (type === "screen") return <div className="mx-auto mt-1 h-7 w-10 rounded-sm border-2 border-muted/75" />;
   if (type === "plane") return <div className="text-2xl leading-none">✈</div>;
   return <div className={`${base} before:block before:mx-auto before:mt-1 before:h-2 before:w-4 before:rounded-b-full before:border-2 before:border-muted/75`} />;
-}
-
-function ProductVisual({ type, accent = "bg-saffron", dark = false, compact = false }) {
-  if (type === "phones" || type === "phone") {
-    return (
-      <div className={`relative ${compact ? "h-28 w-28" : "h-40 w-36"}`}>
-        <div className={`absolute right-3 top-3 h-28 w-16 rounded-xl ${accent} shadow-phone`} />
-        <div className="absolute left-3 bottom-2 h-32 w-20 rounded-xl bg-white shadow-phone border border-line">
-          <div className="mx-auto mt-3 h-4 w-4 rounded-full bg-ink/80" />
-          <div className="mx-auto mt-2 h-16 w-12 rounded bg-surface" />
-        </div>
-      </div>
-    );
-  }
-  if (type === "shoe") return <div className="h-20 w-36 rounded-[42px_18px_22px_18px] bg-white border border-line shadow-card rotate-[-8deg]" />;
-  if (type === "watch") return <div className="h-28 w-16 rounded-2xl bg-ink shadow-card before:block before:h-7 before:w-10 before:mx-auto before:-mt-6 before:bg-muted after:block after:h-7 after:w-10 after:mx-auto after:mt-24 after:bg-muted" />;
-  if (type === "bag") return <div className="h-28 w-24 rounded-lg bg-saffron shadow-card border border-[#DDBB00] before:block before:h-6 before:w-12 before:mx-auto before:-mt-4 before:rounded-t-full before:border-4 before:border-saffron" />;
-  if (type === "earbuds") return <div className="h-20 w-28 rounded-3xl bg-white shadow-card border border-line before:block before:h-8 before:w-8 before:rounded-full before:bg-bottle before:translate-x-5 before:translate-y-6 after:block after:h-8 after:w-8 after:rounded-full after:bg-bottle after:translate-x-16 after:-translate-y-2" />;
-  if (type === "fuel") return <div className={`h-28 w-28 rounded-full ${accent} shadow-phone flex items-center justify-center text-4xl font-black ${dark ? "text-white" : "text-ink"}`}>E</div>;
-  return <div className="h-24 w-24 rounded-lg bg-white shadow-card" />;
 }
