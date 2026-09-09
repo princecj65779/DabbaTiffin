@@ -38,9 +38,11 @@ export default function TopNav() {
             <Logo size="nav" onDark={false} />
           </NavLink>
           <div className="flex-1 max-w-2xl">
-            <div className="bg-white h-11 rounded-lg border-2 border-bottle flex items-center px-4 text-sm text-muted shadow-sm">
-              <span className="mr-3 text-bottle font-extrabold">Search</span>
-              Search Bites meals, cuisines, plans and batch points
+            <div className="bg-white h-11 rounded-lg border-2 border-bottle flex items-center gap-3 px-4 text-sm shadow-sm overflow-hidden">
+              <span className="flex-none text-bottle font-extrabold">Search</span>
+              <span className="min-w-0 flex-1 truncate text-muted">
+                Search Bites meals, cuisines, plans and batch points
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-8">
