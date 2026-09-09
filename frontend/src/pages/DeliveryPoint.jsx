@@ -32,7 +32,7 @@ export default function DeliveryPoint() {
     try {
       const user = await api.updateMe({ delivery_point_id: selected });
       updateUser(user);
-      navigate("/home");
+      navigate("/flipkart");
     } catch (err) {
       setError(err.message || "Could not set delivery point");
     } finally {

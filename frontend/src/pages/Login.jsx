@@ -22,7 +22,7 @@ export default function Login() {
     setBusy(true);
     try {
       await login(email, password);
-      navigate("/home");
+      navigate("/flipkart");
     } catch (err) {
       setError(err.message || "Could not log in");
     } finally {
