@@ -8,6 +8,8 @@ import { money, formatDateFull } from "../lib/format";
 import { DishThumb } from "./Home";
 import MockPaymentModal from "../components/MockPaymentModal";
 
+const SKIP_CUTOFF = "23:59";
+
 export default function BookingReview() {
   const cart = useCart();
   const { user, updateUser } = useAuth();
@@ -115,7 +117,7 @@ export default function BookingReview() {
         <PrimaryButton onClick={pay} disabled={busy} className="py-4 text-base">
           {busy ? "Confirming…" : `Pay ${money(cart.total)} and confirm`}
         </PrimaryButton>
-        <div className="text-center text-xs text-muted">Skip either meal free until 24:00 tonight</div>
+        <div className="text-center text-xs text-muted">Skip either meal free until {SKIP_CUTOFF} tonight</div>
       </div>
       {showPayment && <MockPaymentModal amount={cart.total} onSuccess={() => confirm(true)} onClose={() => setShowPayment(false)} />}
     </div>

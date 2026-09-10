@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext";
 import AppShell from "../components/AppShell";
 import { Card, Notice, PrimaryButton } from "../components/ui";
 import { money, formatDateFull } from "../lib/format";
+import { istDateFromOffset, IST_TIME_ZONE } from "../lib/time";
 import { DishThumb } from "./Home";
 
 const CUISINE_FILTERS = ["All", "Jain", "Gujarati", "Punjabi", "South Indian", "Maharashtrian", "Healthy"];
@@ -33,34 +34,39 @@ const DISH_META = {
   "Varan bhaat": { cuisine: "Maharashtrian", spice: "Mild", tags: ["Comfort"] },
 };
 
-function tomorrowISO() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
-
 export default function Menu() {
   const [params, setParams] = useSearchParams();
   const mealType = params.get("meal") === "lunch" ? "lunch" : "breakfast";
+  const requestedDate = params.get("date");
   const navigate = useNavigate();
   const cart = useCart();
-  const date = useMemo(tomorrowISO, []);
+  const dateOptions = useMemo(() => Array.from({ length: 7 }, (_, offset) => istDateFromOffset(offset)), []);
+  const date = requestedDate || dateOptions[0];
 
   const [menu, setMenu] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [cuisine, setCuisine] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
-    api
-      .menu(date, mealType)
-      .then(setMenu)
+    setError("");
+    setOrders([]);
+    Promise.all([
+      api.menu(date, mealType),
+      api.ordersForDay(date).catch(() => []),
+    ])
+      .then(([menuItems, dayOrders]) => {
+        setMenu(menuItems);
+        setOrders(dayOrders);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [date, mealType]);
 
-  const selectedForMeal = cart.items[mealType];
+  const selectedForMeal = cart.date === date ? cart.items[mealType] : null;
+  const alreadyBooked = orders.some((order) => order.meal_type === mealType && order.status !== "skipped");
   const filteredMenu = menu.filter((item) => {
     const meta = DISH_META[item.dish.name] || {};
     return cuisine === "All" || meta.cuisine === cuisine || meta.tags?.includes(cuisine);
@@ -74,22 +80,49 @@ export default function Menu() {
     }
   };
 
+  const updateParams = (next) => {
+    const merged = {
+      meal: next.meal || mealType,
+      date: next.date || date,
+    };
+    setParams(merged);
+  };
+
   return (
     <AppShell>
       <div className="bg-bottle text-white px-5 pt-4 pb-5 md:px-10 md:py-7">
         <div className="max-w-6xl mx-auto">
-          <div className="text-[11px] font-extrabold tracking-wide text-saffron uppercase">Pre-book tomorrow</div>
+          <div className="text-[11px] font-extrabold tracking-wide text-saffron uppercase">Choose service day</div>
           <div className="mt-1 text-lg md:text-3xl font-extrabold">Menu for {formatDateFull(date)}</div>
-          <div className="text-xs md:text-sm opacity-90 mt-1">Curated tiffins for fixed delivery batches.</div>
+          <div className="text-xs md:text-sm opacity-90 mt-1">
+            Pick today if a slot is still available, or pre-book any open upcoming batch.
+          </div>
         </div>
       </div>
 
       <div className="bg-white border-b border-line">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 flex items-center gap-2 py-3 overflow-x-auto">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 flex flex-col gap-3 py-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {dateOptions.map((option, index) => (
+              <button
+                key={option}
+                onClick={() => updateParams({ date: option })}
+                className={`flex-none rounded px-4 py-2 text-xs font-extrabold transition ${
+                  date === option ? "bg-bottle text-white" : "bg-surface text-ink"
+                }`}
+              >
+                <span className="block">{index === 0 ? "Today" : index === 1 ? "Tomorrow" : formatShortDay(option)}</span>
+                <span className={`block mt-0.5 text-[10px] ${date === option ? "text-white/80" : "text-muted"}`}>
+                  {formatTinyDate(option)}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto">
           {["breakfast", "lunch"].map((m) => (
             <button
               key={m}
-              onClick={() => setParams({ meal: m })}
+              onClick={() => updateParams({ meal: m })}
               className={`min-w-[112px] rounded px-4 py-2 text-sm font-extrabold capitalize ${
                 mealType === m ? "bg-bottle text-white" : "bg-surface text-ink"
               }`}
@@ -101,6 +134,7 @@ export default function Menu() {
             <span className="bg-cream px-2.5 py-1.5 rounded">Veg only</span>
             <span className="bg-cream px-2.5 py-1.5 rounded">Final price</span>
             <span className="bg-cream px-2.5 py-1.5 rounded">No delivery fee</span>
+          </div>
           </div>
         </div>
       </div>
@@ -121,8 +155,12 @@ export default function Menu() {
         </div>
 
         <Notice className="bg-white border border-line text-mutedwarm">
-          <strong className="text-ink">Tiffin-first design:</strong> a smaller menu keeps prep predictable, routes efficient,
-          and prices transparent.
+          <strong className="text-ink">{date === dateOptions[0] ? "Today is limited:" : "Tiffin-first design:"}</strong>{" "}
+          {alreadyBooked
+            ? `Your ${mealType} is already booked for this date. Use Calendar to skip it or pick another meal slot.`
+            : date === dateOptions[0]
+            ? "same-day booking depends on remaining kitchen capacity and meals you have not already booked."
+            : "a smaller menu keeps prep predictable, routes efficient, and prices transparent."}
         </Notice>
 
         <div className="grid md:grid-cols-3 gap-3">
@@ -138,6 +176,7 @@ export default function Menu() {
           {filteredMenu.map((item, index) => {
             const isSelected = selectedForMeal?.id === item.id;
             const meta = DISH_META[item.dish.name] || { cuisine: "Homestyle", spice: "Medium", tags: [] };
+            const cannotAdd = item.sold_out || alreadyBooked;
             return (
               <Card
                 key={item.id}
@@ -167,27 +206,31 @@ export default function Menu() {
                     <div className="text-[11px] font-bold text-good bg-[#E9F7EE] px-2 py-1 rounded">4.3</div>
                   </div>
                   <div className="text-xs text-muted mt-1.5 leading-relaxed min-h-[40px]">
-                    {item.sold_out ? `Sold out for ${date}` : `${item.dish.description} · ${item.dish.kcal} kcal`}
+                    {alreadyBooked
+                      ? `Already booked for ${date}`
+                      : item.sold_out
+                      ? `Sold out for ${date}`
+                      : `${item.dish.description} · ${item.dish.kcal} kcal`}
                   </div>
                   <div className="flex justify-between items-center mt-4">
                     <div className="text-base font-extrabold text-ink">
-                      {money(item.price)} {!item.sold_out && <span className="text-[11px] text-muted font-bold"> final</span>}
+                      {money(item.price)} {!cannotAdd && <span className="text-[11px] text-muted font-bold"> final</span>}
                     </div>
                     <button
-                      disabled={item.sold_out}
+                      disabled={cannotAdd}
                       onClick={() => toggleAdd(item)}
                       className={
-                        item.sold_out
+                        cannotAdd
                           ? "border border-line text-line text-xs font-extrabold px-3.5 py-1.5 rounded-md"
                           : isSelected
                           ? "bg-saffron text-ink text-xs font-extrabold px-4 py-1.5 rounded-md"
                           : "border border-bottle text-bottle text-xs font-extrabold px-5 py-1.5 rounded"
                       }
                     >
-                      {item.sold_out ? "Sold out" : isSelected ? "Added" : "Add"}
+                      {alreadyBooked ? "Booked" : item.sold_out ? "Sold out" : isSelected ? "Added" : "Add"}
                     </button>
                   </div>
-                  {!item.sold_out && (
+                  {!cannotAdd && (
                     <div className="mt-3 flex gap-2 overflow-x-auto">
                       {["Curd +₹12", "Fruit +₹25", "Extra roti +₹10"].map((addon) => (
                         <button
@@ -206,7 +249,7 @@ export default function Menu() {
         </div>
       </div>
 
-      {cart.count > 0 && (
+      {cart.count > 0 && cart.date === date && (
         <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t border-line px-5 py-3 z-10 shadow-[0_-4px_18px_rgba(23,35,55,.08)]">
           <div className="max-w-6xl mx-auto flex items-center gap-3">
             <div className="flex-1">
@@ -238,4 +281,14 @@ function MiniFeature({ title, text }) {
       <div className="mt-1 text-xs leading-relaxed text-mutedwarm">{text}</div>
     </div>
   );
+}
+
+function formatShortDay(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00+05:30`);
+  return d.toLocaleDateString("en-IN", { timeZone: IST_TIME_ZONE, weekday: "short" });
+}
+
+function formatTinyDate(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00+05:30`);
+  return d.toLocaleDateString("en-IN", { timeZone: IST_TIME_ZONE, day: "numeric", month: "short" });
 }

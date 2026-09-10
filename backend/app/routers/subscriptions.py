@@ -1,4 +1,4 @@
-from datetime import date as date_type, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..deps import get_current_user
+from ..time_utils import today_ist
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -61,7 +62,7 @@ def start_subscription(
         user_id=current_user.id,
         plan_id=plan.id,
         meals_left=plan.meals_count,
-        renews_on=date_type.today() + timedelta(days=30),
+        renews_on=today_ist() + timedelta(days=30),
         active=True,
         paused=False,
     )

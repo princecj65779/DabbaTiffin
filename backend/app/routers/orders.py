@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..deps import get_current_user
+from ..time_utils import today_ist
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -32,7 +33,7 @@ def orders_today(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    today = date_type.today()
+    today = today_ist()
     return (
         db.query(models.MealOrder)
         .filter(models.MealOrder.user_id == current_user.id, models.MealOrder.date == today)
@@ -58,7 +59,7 @@ def orders_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    today = date_type.today()
+    today = today_ist()
     orders = (
         db.query(models.MealOrder)
         .filter(models.MealOrder.user_id == current_user.id)
@@ -89,9 +90,9 @@ def orders_week(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    today = date_type.today()
+    today = today_ist()
     days: list[schemas.WeekDayOut] = []
-    for offset in range(1, 8):
+    for offset in range(0, 7):
         d = today + timedelta(days=offset)
         is_sunday = d.weekday() == 6
         label = f"{DAY_LABELS[d.weekday()]} {d.day} {d.strftime('%b')}"

@@ -1,4 +1,4 @@
-from datetime import date as date_type, timedelta
+from datetime import date as date_type, time, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import extract
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..deps import get_current_user
+from ..time_utils import now_ist, today_ist
 
 router = APIRouter(prefix="/home", tags=["home"])
 
@@ -53,8 +54,11 @@ def home(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    today = date_type.today()
+    today = today_ist()
     tomorrow = today + timedelta(days=1)
+    now = now_ist()
+    booking_closes_at = "23:00"
+    skip_closes_at = "23:59"
 
     today_slots = [
         _slot_for(db, current_user.id, today, models.MealType.breakfast),
@@ -86,6 +90,20 @@ def home(
         )
         .all()
     )
+    today_meals_count = sum(1 for slot in today_slots if slot.status and slot.status != models.OrderStatus.skipped)
+    tomorrow_booked_count = sum(1 for slot in tomorrow_slots if slot.status == models.OrderStatus.booked)
+    route_confirmed_meals = 0
+    if current_user.delivery_point_id:
+        route_confirmed_meals = (
+            db.query(models.MealOrder)
+            .join(models.User, models.MealOrder.user_id == models.User.id)
+            .filter(
+                models.User.delivery_point_id == current_user.delivery_point_id,
+                models.MealOrder.date == tomorrow,
+                models.MealOrder.status != models.OrderStatus.skipped,
+            )
+            .count()
+        )
 
     return schemas.HomeOut(
         today_date=today,
@@ -93,7 +111,14 @@ def home(
         delivering_to=current_user.delivery_point.name if current_user.delivery_point else None,
         today=today_slots,
         tomorrow=tomorrow_slots,
-        booking_closes_at="23:00",
+        booking_closes_at=booking_closes_at,
+        skip_closes_at=skip_closes_at,
+        current_time=now.strftime("%H:%M"),
+        booking_open=now.time() < time.fromisoformat(booking_closes_at),
+        skip_open=now.time() < time.fromisoformat(skip_closes_at),
+        today_meals_count=today_meals_count,
+        tomorrow_booked_count=tomorrow_booked_count,
+        route_confirmed_meals=route_confirmed_meals,
         menu_live=tomorrow_menu_exists,
         subscription=subscription,
         spent_this_month=sum(float(o.price) for o in spent),

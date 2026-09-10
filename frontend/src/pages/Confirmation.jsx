@@ -4,6 +4,8 @@ import { api } from "../api";
 import { Card, DarkButton, Notice, OutlineButton } from "../components/ui";
 import { money } from "../lib/format";
 
+const SKIP_CUTOFF = "23:59";
+
 export default function Confirmation() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
@@ -53,7 +55,7 @@ export default function Confirmation() {
         </Card>
 
         <Notice>
-          Changed your mind? Skip either meal free until <strong>24:00</strong> tonight and the amount
+          Changed your mind? Skip either meal free until <strong>{SKIP_CUTOFF}</strong> tonight and the amount
           returns to your wallet.
         </Notice>
 

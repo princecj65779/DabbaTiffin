@@ -8,7 +8,11 @@ export function CartProvider({ children }) {
 
   const setItem = (mealType, dailyMenuItem, forDate) => {
     setDate(forDate);
-    setItems((prev) => ({ ...prev, [mealType]: dailyMenuItem }));
+    setItems((prev) =>
+      date && date !== forDate
+        ? { breakfast: null, lunch: null, [mealType]: dailyMenuItem }
+        : { ...prev, [mealType]: dailyMenuItem }
+    );
   };
 
   const clear = () => {

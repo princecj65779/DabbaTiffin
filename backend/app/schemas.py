@@ -228,7 +228,14 @@ class HomeOut(BaseModel):
     today: list[HomeMealSlot]
     tomorrow: list[HomeMealSlot]
     booking_closes_at: str
-    skip_closes_at: str = "24:00"
+    skip_closes_at: str = "23:59"
+    current_time: str
+    booking_open: bool
+    skip_open: bool
+    today_meals_count: int
+    tomorrow_booked_count: int
+    route_confirmed_meals: int
+    route_discount_target: int = 25
     menu_live: bool
     subscription: UserSubscriptionOut | None
     spent_this_month: float

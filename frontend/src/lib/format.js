@@ -4,11 +4,16 @@ export function money(amount) {
 }
 
 export function formatDateLabel(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  const d = new Date(`${dateStr}T00:00:00+05:30`);
+  return d.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
 }
 
 export function formatDateFull(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  return d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  const d = new Date(`${dateStr}T00:00:00+05:30`);
+  return d.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 }

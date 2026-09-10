@@ -31,6 +31,9 @@ export default function Plans() {
   }, []);
 
   const selectedPlan = plans.find((p) => p.id === selected);
+  const planSummary = selectedPlan
+    ? `${selectedPlan.meals_count} meals per cycle. Skip any day free. Credits return to wallet.`
+    : "Live plan options load from your delivery point.";
 
   const start = async () => {
     if (!selectedPlan) return;
@@ -67,7 +70,7 @@ export default function Plans() {
         <div className="max-w-5xl mx-auto">
           <div className="text-[11px] font-extrabold tracking-wide text-saffron uppercase">Bites subscriptions</div>
           <div className="mt-1 text-lg md:text-3xl font-extrabold">Subscribe for everyday tiffins</div>
-          <div className="text-xs md:text-sm opacity-90 mt-1">22 working days. Skip any day free. Credits return to wallet.</div>
+          <div className="text-xs md:text-sm opacity-90 mt-1">{planSummary}</div>
         </div>
       </div>
 
@@ -171,7 +174,10 @@ export default function Plans() {
               A PG or office can sponsor one handoff point, collect employee/student preferences, and unlock route pricing
               once the batch crosses 15 daily meals.
             </div>
-            <button className="mt-3 w-full rounded border border-bottle px-3 py-2 text-xs font-extrabold text-bottle">
+            <button
+              onClick={() => navigate("/delivery-point")}
+              className="mt-3 w-full rounded border border-bottle px-3 py-2 text-xs font-extrabold text-bottle"
+            >
               Register interest
             </button>
           </Card>

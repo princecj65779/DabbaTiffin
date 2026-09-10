@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api";
@@ -7,6 +8,11 @@ import { Card, OutlineButton, Toggle } from "../components/ui";
 export default function Profile() {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [home, setHome] = useState(null);
+
+  useEffect(() => {
+    api.home().then(setHome).catch(() => setHome(null));
+  }, []);
 
   const toggleVeg = async () => {
     const updated = await api.updateMe({ veg_only: !user.veg_only });
@@ -120,7 +126,10 @@ export default function Profile() {
           <Card className="p-4 border border-line">
             <div className="text-sm font-extrabold text-ink">Campus / office admin</div>
             <div className="mt-3 grid gap-2 text-xs leading-relaxed text-mutedwarm">
-              <div><strong className="text-ink">Confirmed meals:</strong> 42 for tomorrow.</div>
+              <div>
+                <strong className="text-ink">Confirmed meals:</strong>{" "}
+                {home ? `${home.route_confirmed_meals} for ${home.tomorrow_date}` : "refresh from your delivery point."}
+              </div>
               <div><strong className="text-ink">Roster:</strong> export by floor, team or hostel block.</div>
               <div><strong className="text-ink">Billing:</strong> monthly invoice or partial HR subsidy.</div>
             </div>

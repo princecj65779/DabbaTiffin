@@ -6,13 +6,14 @@ Runs automatically at app startup; it's idempotent (skips if data already
 exists) so it's safe on every deploy/restart.
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
 from . import models
 from .database import SessionLocal
 from .security import hash_password
+from .time_utils import today_ist
 
 DEMO_EMAIL = "demo@dabbatiffin.in"
 DEMO_PASSWORD = "Dabba@123"
@@ -229,7 +230,7 @@ def _rotating_dishes_for(day_index: int, meal: str, dishes: dict[str, models.Dis
 
 
 def _seed_menus(db: Session, dishes: dict[str, models.Dish]) -> None:
-    today = date.today()
+    today = today_ist()
     for day_index in range(-2, 8):  # a couple of past days + today + next week
         d = today + timedelta(days=day_index)
         if d.weekday() == 6:  # no service on Sunday
@@ -287,7 +288,7 @@ def _seed_demo_user(
     db.add(user)
     db.flush()
 
-    today = date.today()
+    today = today_ist()
 
     # Yesterday: both meals eaten (handed over) — order history.
     yesterday = today - timedelta(days=1)
