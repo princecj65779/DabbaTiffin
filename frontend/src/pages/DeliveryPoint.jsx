@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { Card, Notice, PrimaryButton, TextInput } from "../components/ui";
+import { Card, Notice, PrimaryButton } from "../components/ui";
 
 export default function DeliveryPoint() {
   const { updateUser } = useAuth();
@@ -12,6 +12,7 @@ export default function DeliveryPoint() {
   const [selected, setSelected] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     api.deliveryPoints().then((data) => {
@@ -24,6 +25,22 @@ export default function DeliveryPoint() {
   const filtered = points.filter((p) =>
     `${p.name} ${p.area}`.toLowerCase().includes(query.toLowerCase())
   );
+  const selectedPoint = points.find((point) => point.id === selected);
+  const queuePoints = points
+    .filter((point) => point.id !== selected)
+    .slice(0, 3);
+  const scoreCount = selectedPoint?.route_confirmed_meals ?? 0;
+  const scoreTarget = selectedPoint?.route_discount_target ?? 25;
+  const scorePercent = selectedPoint?.route_score_percent ?? 0;
+  const nextUnlockLabel =
+    selectedPoint?.next_unlock_label ||
+    (scoreCount >= 50
+      ? "Top route reward active."
+      : scoreCount >= 25
+      ? "Free add-on reward unlocks at 50 meals."
+      : scoreCount >= 15
+      ? "₹5 off per meal unlocks at 25 meals."
+      : "Service unlocks at 15 meals.");
 
   const confirm = async () => {
     if (!selected) return;
@@ -37,6 +54,18 @@ export default function DeliveryPoint() {
       setError(err.message || "Could not set delivery point");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const copyInvite = async () => {
+    const pointName = selectedPoint?.name || "my delivery point";
+    const invite = `${window.location.origin}/delivery-point?invite=${encodeURIComponent(pointName)}`;
+    try {
+      await navigator.clipboard.writeText(invite);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setError("Could not copy invite link");
     }
   };
 
@@ -122,24 +151,24 @@ export default function DeliveryPoint() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-extrabold text-ink">Bites score</div>
-              <div className="text-xs text-muted mt-0.5">Sunrise PG, Block C</div>
+              <div className="text-xs text-muted mt-0.5">{selectedPoint?.name || "Choose a point"}</div>
             </div>
-            <div className="text-xl font-extrabold text-bottle">18/25</div>
+            <div className="text-xl font-extrabold text-bottle">{scoreCount}/{scoreTarget}</div>
           </div>
           <div className="mt-3 h-2 bg-surface rounded-full overflow-hidden">
-            <div className="h-full w-[72%] bg-bottle rounded-full" />
+            <div className="h-full bg-bottle rounded-full transition-all duration-500" style={{ width: `${scorePercent}%` }} />
           </div>
           <div className="mt-2 text-xs leading-relaxed text-mutedwarm">
-            Route is live. Next price unlock at 25 daily meals.
+            {selectedPoint ? nextUnlockLabel : "Select a point to see live route density."}
           </div>
         </Card>
 
         <Card className="p-4 border border-line">
           <div className="text-sm font-extrabold text-ink">Route-density rewards</div>
           <div className="mt-3 grid gap-2">
-            <RewardRow label="15 meals" value="Service unlocks" active />
-            <RewardRow label="25 meals" value="₹5 off per meal" />
-            <RewardRow label="50 meals" value="Free add-on twice a week" />
+            <RewardRow label="15 meals" value="Service unlocks" active={scoreCount >= 15} />
+            <RewardRow label="25 meals" value="₹5 off per meal" active={scoreCount >= 25} />
+            <RewardRow label="50 meals" value="Free add-on twice a week" active={scoreCount >= 50} />
           </div>
         </Card>
 
@@ -148,8 +177,8 @@ export default function DeliveryPoint() {
           <div className="mt-2 text-xs leading-relaxed text-mutedwarm">
             Invite 3 residents from this point to move the batch closer to the next discount tier.
           </div>
-          <button className="mt-3 w-full rounded bg-saffron px-3 py-2 text-xs font-extrabold text-ink">
-            Copy invite link
+          <button onClick={copyInvite} className="mt-3 w-full rounded bg-saffron px-3 py-2 text-xs font-extrabold text-ink">
+            {copied ? "Invite link copied" : "Copy invite link"}
           </button>
         </Card>
 
@@ -160,9 +189,9 @@ export default function DeliveryPoint() {
             minimum daily volume is reached.
           </div>
           <div className="mt-4 grid gap-2 text-xs">
-            <QueueRow label="Hinjewadi Phase 1" value="82%" />
-            <QueueRow label="Kothrud hostels" value="64%" />
-            <QueueRow label="Baner offices" value="41%" />
+            {(queuePoints.length ? queuePoints : filtered.slice(0, 3)).map((point) => (
+              <QueueRow key={point.id} label={point.name} value={`${point.queue_percent ?? point.route_score_percent ?? 0}%`} />
+            ))}
           </div>
         </Card>
         </div>

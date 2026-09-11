@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { useCart } from "../context/CartContext";
+import { ADD_ONS, useCart } from "../context/CartContext";
 import AppShell from "../components/AppShell";
 import { Card, Notice } from "../components/ui";
 import { money, formatDateFull } from "../lib/format";
@@ -36,13 +36,17 @@ export default function Skip() {
   };
 
   const visibleDays = days.map((day) => {
-    if (day.date !== cart.date || cart.count === 0) return day;
+    const dayItems = cart.getItems(day.date);
+    const dayAddOns = cart.getAddOns(day.date);
+    if (!dayItems.breakfast && !dayItems.lunch) return day;
     return {
       ...day,
-      breakfast_dish: cart.items.breakfast?.dish.name || day.breakfast_dish,
-      lunch_dish: cart.items.lunch?.dish.name || day.lunch_dish,
-      breakfast_status: cart.items.breakfast ? "selected" : day.breakfast_status,
-      lunch_status: cart.items.lunch ? "selected" : day.lunch_status,
+      breakfast_dish: dayItems.breakfast?.dish.name || day.breakfast_dish,
+      lunch_dish: dayItems.lunch?.dish.name || day.lunch_dish,
+      breakfast_status: dayItems.breakfast ? "selected" : day.breakfast_status,
+      lunch_status: dayItems.lunch ? "selected" : day.lunch_status,
+      breakfast_add_ons: dayItems.breakfast ? dayAddOns.breakfast : [],
+      lunch_add_ons: dayItems.lunch ? dayAddOns.lunch : [],
       menu_open: true,
     };
   });
@@ -64,7 +68,10 @@ export default function Skip() {
         {cart.count > 0 && (
           <PendingCalendarCard
             cart={cart}
-            onEdit={() => navigate(`/menu?date=${cart.date}&meal=${cart.items.breakfast ? "breakfast" : "lunch"}`)}
+            onEdit={() => {
+              const firstMeal = cart.selectedMeals[0];
+              navigate(`/menu?date=${firstMeal.date}&meal=${firstMeal.mealType}`);
+            }}
             onReview={() => navigate("/booking")}
           />
         )}
@@ -141,7 +148,7 @@ export default function Skip() {
                       onClick={() => navigate(`/menu?date=${day.date}&meal=lunch`)}
                       className="rounded bg-surface px-2 py-2 text-[11px] font-extrabold text-bottle"
                     >
-                      Add curd
+                      Add add-ons
                     </button>
                   </div>
                 )}
@@ -181,29 +188,29 @@ export default function Skip() {
 }
 
 function PendingCalendarCard({ cart, onEdit, onReview }) {
-  const selectedItems = [
-    ["breakfast", cart.items.breakfast],
-    ["lunch", cart.items.lunch],
-  ].filter(([, item]) => Boolean(item));
-
   return (
     <Card className="p-4 border border-bottle bg-[#EEF4FF] smooth-card">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-extrabold uppercase tracking-wide text-bottle">Selected for checkout</div>
-          <div className="mt-1 text-sm font-extrabold text-ink">{formatDateFull(cart.date)}</div>
+          <div className="mt-1 text-sm font-extrabold text-ink">
+            {cart.selectedDates.length === 1 ? formatDateFull(cart.selectedDates[0]) : `${cart.selectedDates.length} service days`}
+          </div>
         </div>
         <div className="text-sm font-extrabold text-bottle">{money(cart.total)}</div>
       </div>
       <div className="mt-3 grid gap-2">
-        {selectedItems.map(([mealType, item]) => (
-          <div key={mealType} className="flex items-center gap-3 rounded bg-white/75 p-2">
+        {cart.selectedMeals.map(({ date, mealType, item, addOns }) => (
+          <div key={`${date}-${mealType}`} className="flex items-center gap-3 rounded bg-white/75 p-2">
             <div className="h-11 w-11 flex-none overflow-hidden rounded bg-surface">
               <DishThumb name={item.dish.name} imageUrl={item.dish.image_url} />
             </div>
             <div className="flex-1">
               <div className="text-sm font-extrabold text-ink">{item.dish.name}</div>
-              <div className="text-[11px] font-bold capitalize text-bottle">{mealType} · selected, not paid</div>
+              <div className="text-[11px] font-bold capitalize text-bottle">
+                {formatDateFull(date)} · {mealType} · selected, not paid
+                {addOnText(addOns) ? ` · ${addOnText(addOns)}` : ""}
+              </div>
             </div>
           </div>
         ))}
@@ -225,12 +232,23 @@ function getDaySummary(day, { noService, hasPending, bothSkipped }) {
   if (!day.menu_open) return "Menu not open yet";
   if (hasPending) {
     return [
-      day.breakfast_status === "selected" && day.breakfast_dish ? `Breakfast selected: ${day.breakfast_dish}` : null,
-      day.lunch_status === "selected" && day.lunch_dish ? `Lunch selected: ${day.lunch_dish}` : null,
+      day.breakfast_status === "selected" && day.breakfast_dish
+        ? `Breakfast selected: ${day.breakfast_dish}${addOnText(day.breakfast_add_ons) ? ` + ${addOnText(day.breakfast_add_ons)}` : ""}`
+        : null,
+      day.lunch_status === "selected" && day.lunch_dish
+        ? `Lunch selected: ${day.lunch_dish}${addOnText(day.lunch_add_ons) ? ` + ${addOnText(day.lunch_add_ons)}` : ""}`
+        : null,
     ].filter(Boolean).join(" · ");
   }
   if (bothSkipped) return "Both meals skipped";
   return [day.breakfast_dish, day.lunch_dish].filter(Boolean).join(" · ") || "Nothing booked";
+}
+
+function addOnText(addOnIds = []) {
+  return addOnIds
+    .map((id) => ADD_ONS.find((item) => item.id === id)?.label)
+    .filter(Boolean)
+    .join(" + ");
 }
 
 function SkipButton({ label, status, orderId, busy, onAct, onEdit, onReview }) {
@@ -254,9 +272,12 @@ function SkipButton({ label, status, orderId, busy, onAct, onEdit, onReview }) {
   }
   if (!orderId) {
     return (
-      <span className="text-[11px] text-line font-bold border border-line rounded px-2 py-1.5">
-        No {label}
-      </span>
+      <button
+        onClick={onEdit}
+        className="text-[11px] font-extrabold text-ink bg-saffron rounded px-2.5 py-1.5"
+      >
+        Book {label}
+      </button>
     );
   }
   if (status === "skipped") {

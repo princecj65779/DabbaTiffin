@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
-import { useCart } from "../context/CartContext";
+import { ADD_ONS, useCart } from "../context/CartContext";
 import AppShell from "../components/AppShell";
 import { Card, Notice, PrimaryButton } from "../components/ui";
 import { money, formatDateFull } from "../lib/format";
@@ -9,30 +9,6 @@ import { istDateFromOffset, IST_TIME_ZONE } from "../lib/time";
 import { DishThumb } from "./Home";
 
 const CUISINE_FILTERS = ["All", "Jain", "Gujarati", "Punjabi", "South Indian", "Maharashtrian", "Healthy"];
-
-const DISH_META = {
-  "Poha with sev": { cuisine: "Maharashtrian", spice: "Mild", tags: ["Popular", "Light"] },
-  "Jain poha": { cuisine: "Jain", spice: "Mild", tags: ["No onion/garlic", "Light"] },
-  Upma: { cuisine: "South Indian", spice: "Mild", tags: ["Light"] },
-  "Idli with sambhar": { cuisine: "South Indian", spice: "Mild", tags: ["Popular"] },
-  "Masala dosa tiffin": { cuisine: "South Indian", spice: "Medium", tags: ["Popular"] },
-  "Thepla with curd": { cuisine: "Gujarati", spice: "Mild", tags: ["Travel friendly"] },
-  "Paneer paratha": { cuisine: "Punjabi", spice: "Medium", tags: ["High protein"] },
-  "Sprouts bowl": { cuisine: "Healthy", spice: "Mild", tags: ["Protein"] },
-  "Sabudana khichdi": { cuisine: "Maharashtrian", spice: "Mild", tags: ["Fasting"] },
-  "Misal pav": { cuisine: "Maharashtrian", spice: "Spicy", tags: ["Popular"] },
-  "Rajma chawal": { cuisine: "Punjabi", spice: "Medium", tags: ["Comfort"] },
-  "Chole chawal": { cuisine: "Punjabi", spice: "Medium", tags: ["Popular"] },
-  "Jain mini thali": { cuisine: "Jain", spice: "Mild", tags: ["No onion/garlic"] },
-  "Gujarati mini thali": { cuisine: "Gujarati", spice: "Mild", tags: ["Balanced"] },
-  "Khichdi kadhi": { cuisine: "Gujarati", spice: "Mild", tags: ["Light"] },
-  "Dal dhokli": { cuisine: "Gujarati", spice: "Medium", tags: ["Homestyle"] },
-  "Dal makhani rice": { cuisine: "Punjabi", spice: "Medium", tags: ["Rich"] },
-  "Curd rice": { cuisine: "South Indian", spice: "Mild", tags: ["Light"] },
-  "Lemon rice": { cuisine: "South Indian", spice: "Mild", tags: ["Light"] },
-  "Millet khichdi": { cuisine: "Healthy", spice: "Mild", tags: ["Millet"] },
-  "Varan bhaat": { cuisine: "Maharashtrian", spice: "Mild", tags: ["Comfort"] },
-};
 
 export default function Menu() {
   const [params, setParams] = useSearchParams();
@@ -65,11 +41,25 @@ export default function Menu() {
       .finally(() => setLoading(false));
   }, [date, mealType]);
 
-  const selectedForMeal = cart.date === date ? cart.items[mealType] : null;
+  const dayItems = cart.getItems(date);
+  const dayAddOns = cart.getAddOns(date);
+  const selectedForMeal = dayItems[mealType];
+  const selectedAddOns = dayAddOns[mealType] || [];
+  const dayCartCount = cart.getCount(date);
+  const dayCartTotal = cart.getTotal(date);
   const alreadyBooked = orders.some((order) => order.meal_type === mealType && order.status !== "skipped");
+  const cuisineCounts = menu.reduce((counts, item) => {
+    const meta = normalizedDishMeta(item.dish);
+    counts.All += 1;
+    if (counts[meta.cuisine] !== undefined) counts[meta.cuisine] += 1;
+    meta.tags.forEach((tag) => {
+      if (counts[tag] !== undefined) counts[tag] += 1;
+    });
+    return counts;
+  }, Object.fromEntries(CUISINE_FILTERS.map((filter) => [filter, 0])));
   const filteredMenu = menu.filter((item) => {
-    const meta = DISH_META[item.dish.name] || {};
-    return cuisine === "All" || meta.cuisine === cuisine || meta.tags?.includes(cuisine);
+    const meta = normalizedDishMeta(item.dish);
+    return cuisine === "All" || meta.cuisine === cuisine || meta.tags.includes(cuisine);
   });
 
   const toggleAdd = (item) => {
@@ -144,12 +134,13 @@ export default function Menu() {
           {CUISINE_FILTERS.map((filter) => (
             <button
               key={filter}
+              disabled={filter !== "All" && cuisineCounts[filter] === 0}
               onClick={() => setCuisine(filter)}
               className={`flex-none rounded-full border px-4 py-2 text-xs font-extrabold transition ${
                 cuisine === filter ? "border-bottle bg-bottle text-white" : "border-line bg-white text-ink"
-              }`}
+              } disabled:opacity-45 disabled:cursor-not-allowed`}
             >
-              {filter}
+              {filter} <span className={cuisine === filter ? "text-white/75" : "text-muted"}>{cuisineCounts[filter]}</span>
             </button>
           ))}
         </div>
@@ -175,7 +166,7 @@ export default function Menu() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMenu.map((item, index) => {
             const isSelected = selectedForMeal?.id === item.id;
-            const meta = DISH_META[item.dish.name] || { cuisine: "Homestyle", spice: "Medium", tags: [] };
+            const meta = normalizedDishMeta(item.dish);
             const cannotAdd = item.sold_out || alreadyBooked;
             return (
               <Card
@@ -203,7 +194,9 @@ export default function Menu() {
                   </div>
                   <div className="flex items-start justify-between gap-3">
                     <div className="text-[16px] font-extrabold text-ink leading-snug">{item.dish.name}</div>
-                    <div className="text-[11px] font-bold text-good bg-[#E9F7EE] px-2 py-1 rounded">4.3</div>
+                    <div className="text-[11px] font-bold text-good bg-[#E9F7EE] px-2 py-1 rounded">
+                      {Number(meta.rating || 4.3).toFixed(1)}
+                    </div>
                   </div>
                   <div className="text-xs text-muted mt-1.5 leading-relaxed min-h-[40px]">
                     {alreadyBooked
@@ -232,14 +225,24 @@ export default function Menu() {
                   </div>
                   {!cannotAdd && (
                     <div className="mt-3 flex gap-2 overflow-x-auto">
-                      {["Curd +₹12", "Fruit +₹25", "Extra roti +₹10"].map((addon) => (
+                      {ADD_ONS.map((addon) => {
+                        const addOnSelected = isSelected && selectedAddOns.includes(addon.id);
+                        return (
                         <button
-                          key={addon}
-                          className="flex-none rounded-full bg-surface px-3 py-1.5 text-[11px] font-bold text-mutedwarm"
+                          key={addon.id}
+                          type="button"
+                          onClick={() => cart.toggleAddOn(mealType, addon.id, date)}
+                          disabled={!isSelected}
+                          className={`flex-none rounded-full border px-3 py-1.5 text-[11px] font-bold ${
+                            addOnSelected
+                              ? "border-bottle bg-bottle text-white"
+                              : "border-transparent bg-surface text-mutedwarm disabled:opacity-50"
+                          }`}
                         >
-                          {addon}
+                          {addon.label} +{money(addon.price)}
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -247,14 +250,38 @@ export default function Menu() {
             );
           })}
         </div>
+
+        {!loading && filteredMenu.length === 0 && (
+          <Card className="p-5 border border-line text-center">
+            <div className="text-base font-extrabold text-ink">No {cuisine} dishes for this {mealType}</div>
+            <div className="mt-1 text-sm text-mutedwarm">
+              This batch has {menu.length} dish{menu.length === 1 ? "" : "es"} available. Switch meal type or view all dishes.
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2">
+              <button onClick={() => setCuisine("All")} className="rounded bg-saffron px-4 py-2 text-xs font-extrabold text-ink">
+                Show all dishes
+              </button>
+              <button
+                onClick={() => updateParams({ meal: mealType === "breakfast" ? "lunch" : "breakfast" })}
+                className="rounded border border-bottle px-4 py-2 text-xs font-extrabold text-bottle"
+              >
+                Check {mealType === "breakfast" ? "lunch" : "breakfast"}
+              </button>
+            </div>
+          </Card>
+        )}
       </div>
 
-      {cart.count > 0 && cart.date === date && (
+      {dayCartCount > 0 && (
         <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t border-line px-5 py-3 z-10 shadow-[0_-4px_18px_rgba(23,35,55,.08)]">
           <div className="max-w-6xl mx-auto flex items-center gap-3">
             <div className="flex-1">
-              <div className="text-base font-extrabold text-ink">{cart.count} meal{cart.count > 1 ? "s" : ""} · {money(cart.total)}</div>
-              <div className="text-[11px] text-good font-bold">Final price. Taxes and batch delivery included.</div>
+              <div className="text-base font-extrabold text-ink">
+                {dayCartCount} meal{dayCartCount > 1 ? "s" : ""} for this day · {money(dayCartTotal)}
+              </div>
+              <div className="text-[11px] text-good font-bold">
+                {cart.count > dayCartCount ? `${cart.count} total meals in cart. ` : ""}Final price included.
+              </div>
             </div>
             <PrimaryButton onClick={() => navigate("/booking")} className="px-7 py-3.5">
               Review cart
@@ -281,6 +308,26 @@ function MiniFeature({ title, text }) {
       <div className="mt-1 text-xs leading-relaxed text-mutedwarm">{text}</div>
     </div>
   );
+}
+
+function normalizedDishMeta(dish = {}) {
+  return {
+    cuisine: dish.cuisine || inferCuisine(dish.name),
+    spice: dish.spice || "Medium",
+    tags: Array.isArray(dish.tags) ? dish.tags : [],
+    rating: dish.rating || 4.3,
+  };
+}
+
+function inferCuisine(name = "") {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes("jain")) return "Jain";
+  if (lowerName.includes("thepla") || lowerName.includes("dhokli") || lowerName.includes("kadhi")) return "Gujarati";
+  if (lowerName.includes("rajma") || lowerName.includes("chole") || lowerName.includes("makhani") || lowerName.includes("paratha")) return "Punjabi";
+  if (lowerName.includes("idli") || lowerName.includes("dosa") || lowerName.includes("upma") || lowerName.includes("rice")) return "South Indian";
+  if (lowerName.includes("sprouts") || lowerName.includes("millet")) return "Healthy";
+  if (lowerName.includes("poha") || lowerName.includes("misal") || lowerName.includes("sabudana") || lowerName.includes("varan")) return "Maharashtrian";
+  return "Homestyle";
 }
 
 function formatShortDay(dateStr) {

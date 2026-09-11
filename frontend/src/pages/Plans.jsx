@@ -12,6 +12,7 @@ export default function Plans() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [mySub, setMySub] = useState(null);
+  const [home, setHome] = useState(null);
   const [selected, setSelected] = useState(null);
   const [paymentMethod] = useState("card");
   const [showPayment, setShowPayment] = useState(false);
@@ -19,9 +20,10 @@ export default function Plans() {
   const [error, setError] = useState("");
 
   const load = async () => {
-    const [planList, sub] = await Promise.all([api.plans(), api.mySubscription()]);
+    const [planList, sub, homeData] = await Promise.all([api.plans(), api.mySubscription(), api.home()]);
     setPlans(planList);
     setMySub(sub);
+    setHome(homeData);
     const featured = planList.find((p) => p.featured) || planList[0];
     setSelected(featured?.id || null);
   };
@@ -34,6 +36,8 @@ export default function Plans() {
   const planSummary = selectedPlan
     ? `${selectedPlan.meals_count} meals per cycle. Skip any day free. Credits return to wallet.`
     : "Live plan options load from your delivery point.";
+  const routeCount = home?.route_confirmed_meals ?? 0;
+  const routeTarget = home?.route_discount_target ?? 15;
 
   const start = async () => {
     if (!selectedPlan) return;
@@ -80,8 +84,8 @@ export default function Plans() {
             <div className="text-sm font-extrabold text-ink">Choose your Bites mode</div>
             <div className="mt-3 grid sm:grid-cols-3 gap-3">
               <ModeCard title="Daily" price="Pay per meal" text="Best when you want to pre-book occasionally." />
-              <ModeCard title="Monthly" price="Lowest meal price" text="Best for students, PGs and office regulars." active />
-              <ModeCard title="Group" price="Route discount" text="For offices, hostels and PG admins." />
+              <ModeCard title="Monthly" price="Lowest meal price" text="Selected plan pricing is shown below." active={Boolean(selectedPlan)} />
+              <ModeCard title="Group" price="Route discount" text={`${routeCount}/${routeTarget} meals at your point.`} active={routeCount >= routeTarget} />
             </div>
           </Card>
 
@@ -158,9 +162,9 @@ export default function Plans() {
           <Card className="p-4 border border-line">
             <div className="text-sm font-extrabold text-ink">Density pricing ladder</div>
             <div className="mt-3 grid gap-2 text-xs">
-              <PriceTier count="15" benefit="Route opens" />
-              <PriceTier count="25" benefit="₹5 off each meal" active />
-              <PriceTier count="50" benefit="Add-on rewards" />
+              <PriceTier count="15" benefit="Route opens" active={routeCount >= 15} />
+              <PriceTier count="25" benefit="₹5 off each meal" active={routeCount >= 25} />
+              <PriceTier count="50" benefit="Add-on rewards" active={routeCount >= 50} />
             </div>
           </Card>
 

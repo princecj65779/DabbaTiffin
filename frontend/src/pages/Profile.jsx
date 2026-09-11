@@ -9,6 +9,7 @@ export default function Profile() {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [home, setHome] = useState(null);
+  const [panel, setPanel] = useState(null);
 
   useEffect(() => {
     api.home().then(setHome).catch(() => setHome(null));
@@ -28,6 +29,29 @@ export default function Profile() {
     logout();
     navigate("/login");
   };
+
+  const profileActions = [
+    {
+      label: "Payment methods",
+      description: `Wallet balance ${formatMoney(user.wallet_balance)}. Card checkout is enabled for new bookings.`,
+      action: () => setPanel("payments"),
+    },
+    {
+      label: "My plan and billing",
+      description: home?.subscription ? `${home.subscription.plan.name} renews ${home.subscription.renews_on}.` : "No active plan yet.",
+      action: () => navigate("/plans"),
+    },
+    {
+      label: "Kitchen and hygiene reports",
+      description: home ? `${home.delivering_to} has live sealed-handoff tracking on booked orders.` : "Reports load from your active point.",
+      action: () => setPanel("hygiene"),
+    },
+    {
+      label: "Help and support",
+      description: "Raise delivery, meal quality or refund issues from one place.",
+      action: () => setPanel("support"),
+    },
+  ];
 
   if (!user) return null;
 
@@ -76,23 +100,39 @@ export default function Profile() {
         </Card>
 
         <Card className="overflow-hidden">
-          {["Payment methods", "My plan and billing", "Kitchen and hygiene reports", "Help and support"].map(
-            (label, i, arr) => (
-              <div
-                key={label}
-                className={`px-4 py-3.5 text-sm font-bold flex justify-between ${
+          {profileActions.map((item, i, arr) => (
+              <button
+                key={item.label}
+                onClick={item.action}
+                className={`w-full px-4 py-3.5 text-left flex items-center justify-between gap-4 ${
                   i < arr.length - 1 ? "border-b border-[#F0ECE7]" : ""
                 }`}
               >
-                {label} <span className="text-line">›</span>
-              </div>
-            )
-          )}
+                <span>
+                  <span className="block text-sm font-bold text-ink">{item.label}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-mutedwarm">{item.description}</span>
+                </span>
+                <span className="text-line">›</span>
+              </button>
+          ))}
         </Card>
 
         <OutlineButton onClick={signOut} className="border-line text-muted">
           Log out
         </OutlineButton>
+        {panel && (
+          <Card className="p-4 border border-bottle bg-[#EEF4FF]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-extrabold text-ink">{panelContent(panel, home, user).title}</div>
+                <div className="mt-2 text-xs leading-relaxed text-mutedwarm">{panelContent(panel, home, user).body}</div>
+              </div>
+              <button onClick={() => setPanel(null)} className="text-xs font-extrabold text-bottle">
+                Close
+              </button>
+            </div>
+          </Card>
+        )}
         </div>
 
         <div className="flex flex-col gap-3">
@@ -138,6 +178,31 @@ export default function Profile() {
       </div>
     </AppShell>
   );
+}
+
+function formatMoney(value) {
+  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+}
+
+function panelContent(panel, home, user) {
+  if (panel === "payments") {
+    return {
+      title: "Payment methods",
+      body: `Bites wallet has ${formatMoney(user.wallet_balance)} available. Card payments open a demo checkout before confirming meals.`,
+    };
+  }
+  if (panel === "hygiene") {
+    return {
+      title: "Kitchen and hygiene reports",
+      body: home
+        ? `Current point: ${home.delivering_to}. Booked meals show kitchen name, packed time, batch code and inspection status on the tracking screen.`
+        : "Kitchen reports appear after your delivery point and booked meals load.",
+    };
+  }
+  return {
+    title: "Help and support",
+    body: "Use tracking to report wrong meal, late handoff, broken seal or quality issues. The app can attach the order and batch code automatically.",
+  };
 }
 
 function Preference({ title, value }) {

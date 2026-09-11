@@ -8,6 +8,18 @@ from ..utils import gen_batch_code, gen_booking_code
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
+ADD_ON_PRICES = {
+    "curd": 12,
+    "fruit": 25,
+    "extra_roti": 10,
+}
+
+ADD_ON_LABELS = {
+    "curd": "Curd",
+    "fruit": "Fruit",
+    "extra_roti": "Extra roti",
+}
+
 
 @router.post("", response_model=schemas.BookingOut)
 def create_booking(
@@ -30,6 +42,12 @@ def create_booking(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Menu item not found for that date")
         if daily_menu.sold_out:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, f"{daily_menu.dish.name} is sold out")
+
+        invalid_add_ons = [add_on for add_on in item.add_ons if add_on not in ADD_ON_PRICES]
+        if invalid_add_ons:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "One or more add-ons are not available")
+        add_on_total = sum(ADD_ON_PRICES[add_on] for add_on in item.add_ons)
+        add_on_note = ", ".join(ADD_ON_LABELS[add_on] for add_on in item.add_ons)
 
         existing = (
             db.query(models.MealOrder)
@@ -58,12 +76,13 @@ def create_booking(
             meal_type=item.meal_type,
             daily_menu_id=daily_menu.id,
             dish_name=daily_menu.dish.name,
-            price=float(daily_menu.price),
+            price=float(daily_menu.price) + add_on_total,
             status=models.OrderStatus.booked,
             slot_window=slot_window,
             source="booking",
+            note=f"Add-ons: {add_on_note}" if add_on_note else "",
         )
-        total += float(daily_menu.price)
+        total += float(meal_order.price)
         meal_orders.append(meal_order)
 
     if payload.payment_method == "wallet":

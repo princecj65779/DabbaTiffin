@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { useCart } from "../context/CartContext";
+import { ADD_ONS, useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { Card, PrimaryButton } from "../components/ui";
 import { money, formatDateFull } from "../lib/format";
@@ -25,15 +25,25 @@ export default function BookingReview() {
     setBusy(true);
     setError("");
     try {
-      const items = [];
-      if (cart.items.breakfast) items.push({ meal_type: "breakfast", daily_menu_id: cart.items.breakfast.id });
-      if (cart.items.lunch) items.push({ meal_type: "lunch", daily_menu_id: cart.items.lunch.id });
-      const booking = await api.createBooking({ date: cart.date, items, payment_method: paymentMethod });
+      const bookings = [];
+      for (const date of cart.selectedDates) {
+        const entry = cart.entries[date];
+        const items = ["breakfast", "lunch"]
+          .filter((mealType) => entry.items[mealType])
+          .map((mealType) => ({
+            meal_type: mealType,
+            daily_menu_id: entry.items[mealType].id,
+            add_ons: entry.addOns[mealType] || [],
+          }));
+        if (items.length > 0) {
+          bookings.push(await api.createBooking({ date, items, payment_method: paymentMethod }));
+        }
+      }
       if (paymentMethod === "wallet") {
-        updateUser({ wallet_balance: Number(user.wallet_balance) - booking.total_amount });
+        updateUser({ wallet_balance: Number(user.wallet_balance) - cart.total });
       }
       cart.clear();
-      navigate(`/confirmation/${booking.id}`);
+      navigate(`/confirmation/${bookings[bookings.length - 1].id}`);
     } catch (err) {
       setError(err.message || "Could not confirm booking");
       if (propagateError) throw err;
@@ -53,35 +63,52 @@ export default function BookingReview() {
         <button onClick={() => navigate(-1)} className="text-xl font-extrabold">
           ← Review booking
         </button>
-        <div className="text-sm opacity-90 mt-1">For {formatDateFull(cart.date)}</div>
+        <div className="text-sm opacity-90 mt-1">
+          {cart.selectedDates.length === 1
+            ? `For ${formatDateFull(cart.selectedDates[0])}`
+            : `${cart.selectedDates.length} service days in this cart`}
+        </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-4 flex flex-col gap-3">
-        <Card className="p-3.5 flex flex-col gap-3">
-          {["breakfast", "lunch"].map((mealType) => {
-            const item = cart.items[mealType];
-            if (!item) return null;
-            return (
-              <div key={mealType} className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-lg bg-canvas flex-none overflow-hidden">
-                  <DishThumb name={item.dish.name} imageUrl={item.dish.image_url} />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-extrabold text-ink">{item.dish.name}</div>
-                  <div className="text-xs text-muted capitalize">
-                    {mealType} · {item.dish.description}
+        {cart.selectedDates.map((date) => {
+          const entry = cart.entries[date];
+          return (
+            <Card key={date} className="p-3.5 flex flex-col gap-3">
+              <div className="text-xs font-extrabold text-bottle uppercase">{formatDateFull(date)}</div>
+              {["breakfast", "lunch"].map((mealType) => {
+                const item = entry.items[mealType];
+                if (!item) return null;
+                const mealAddOns = entry.addOns[mealType] || [];
+                return (
+                  <div key={mealType} className="flex gap-3 items-start">
+                    <div className="w-10 h-10 rounded-lg bg-canvas flex-none overflow-hidden">
+                      <DishThumb name={item.dish.name} imageUrl={item.dish.image_url} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-extrabold text-ink">{item.dish.name}</div>
+                      <div className="text-xs text-muted capitalize">
+                        {mealType} · {item.dish.description}
+                      </div>
+                      {mealAddOns.length > 0 && (
+                        <div className="mt-1 text-[11px] font-bold text-bottle">
+                          {mealAddOns.map(addOnLabel).join(" · ")}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm font-extrabold">{money(mealTotal(item.price, mealAddOns))}</div>
                   </div>
-                </div>
-                <div className="text-sm font-extrabold">{money(item.price)}</div>
-              </div>
-            );
-          })}
-        </Card>
+                );
+              })}
+            </Card>
+          );
+        })}
 
         <Card className="p-4">
           <div className="text-xs font-extrabold text-muted tracking-wide mb-3">WHAT YOU PAY</div>
           <div className="flex flex-col gap-2.5 text-[13px] text-ink">
             <Row label={`${cart.count} meal${cart.count > 1 ? "s" : ""}`} value={money(cart.total)} bold />
+            {cart.addOnTotal > 0 && <Row label="Add-ons included" value={money(cart.addOnTotal)} good />}
             <Row label="Taxes" value="Included" bold />
             <Row label="Batch delivery" value="₹0" good />
             <Row label="Packaging" value="₹0" good />
@@ -122,6 +149,18 @@ export default function BookingReview() {
       {showPayment && <MockPaymentModal amount={cart.total} onSuccess={() => confirm(true)} onClose={() => setShowPayment(false)} />}
     </div>
   );
+}
+
+function addOnLabel(addOnId) {
+  const addOn = ADD_ONS.find((item) => item.id === addOnId);
+  return addOn ? `${addOn.label} +${money(addOn.price)}` : addOnId;
+}
+
+function mealTotal(basePrice, addOnIds) {
+  return Number(basePrice || 0) + addOnIds.reduce((sum, id) => {
+    const addOn = ADD_ONS.find((item) => item.id === id);
+    return sum + (addOn?.price || 0);
+  }, 0);
 }
 
 function Row({ label, value, bold, good }) {

@@ -37,6 +37,11 @@ class DeliveryPointOut(BaseModel):
     breakfast_window: str
     lunch_window: str
     featured: bool
+    route_confirmed_meals: int = 0
+    route_discount_target: int = 25
+    route_score_percent: int = 0
+    next_unlock_label: str = "Service unlocks at 15 meals"
+    queue_percent: int = 0
 
     class Config:
         from_attributes = True
@@ -71,6 +76,10 @@ class DishOut(BaseModel):
     kcal: int
     image_url: str
     veg: bool
+    cuisine: str = "Homestyle"
+    spice: str = "Medium"
+    tags: list[str] = Field(default_factory=list)
+    rating: float = 4.3
 
     class Config:
         from_attributes = True
@@ -93,6 +102,7 @@ class DailyMenuOut(BaseModel):
 class BookingItemRequest(BaseModel):
     meal_type: MealType
     daily_menu_id: str
+    add_ons: list[str] = Field(default_factory=list)
 
 
 class CreateBookingRequest(BaseModel):
@@ -111,6 +121,7 @@ class MealOrderOut(BaseModel):
     slot_window: str
     note: str
     source: str
+    add_ons: list[str] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -140,6 +151,12 @@ class TrackingOut(BaseModel):
     order: MealOrderOut
     batch_code: str
     rider_name: str
+    rider_phone: str
+    kitchen_name: str
+    packed_at: str
+    inspection_status: str
+    kitchen_rating: float
+    handoff_wait_minutes: int
     steps: list[TrackingStep]
 
 
@@ -218,7 +235,7 @@ class HomeMealSlot(BaseModel):
     slot_window: str | None = None
     note: str = ""
     price: float | None = None
-    preview_dishes: list[str] = []
+    preview_dishes: list[str] = Field(default_factory=list)
 
 
 class HomeOut(BaseModel):

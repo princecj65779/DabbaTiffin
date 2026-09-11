@@ -77,15 +77,15 @@ export default function Tracking() {
           <div className="w-[42px] h-[42px] rounded-full bg-[#F0ECE7] flex-none" />
           <div className="flex-1">
             <div className="text-sm font-extrabold">{data.rider_name}</div>
-            <div className="text-xs text-muted">Certified kitchen partner</div>
+            <div className="text-xs text-muted">{data.kitchen_name}</div>
           </div>
-          <a href="tel:+911234567890" className="border border-bottle text-bottle text-xs font-extrabold px-3 py-2 rounded-md">
+          <a href={`tel:${data.rider_phone}`} className="border border-bottle text-bottle text-xs font-extrabold px-3 py-2 rounded-md">
             Call
           </a>
         </Card>
 
         <Card className="p-4 text-[13px] text-mutedwarm leading-relaxed">
-          Running late to the gate? Meals wait in the insulated box for 30 minutes after the slot.
+          Running late to the gate? Meals wait in the insulated box for {data.handoff_wait_minutes} minutes after the slot.
         </Card>
 
         <OutlineButton
@@ -101,10 +101,10 @@ export default function Tracking() {
           <Card className="p-4 border border-line">
             <div className="text-sm font-extrabold text-ink">Kitchen transparency</div>
             <div className="mt-3 grid gap-2 text-xs leading-relaxed text-mutedwarm">
-              <div><strong className="text-ink">Kitchen:</strong> Verified partner, Kothrud cluster.</div>
-              <div><strong className="text-ink">Packed:</strong> 12:24 with sealed batch code.</div>
-              <div><strong className="text-ink">Inspection:</strong> Hygiene checklist passed today.</div>
-              <div><strong className="text-ink">Rating:</strong> 4.4 from this delivery point.</div>
+              <div><strong className="text-ink">Kitchen:</strong> {data.kitchen_name}</div>
+              <div><strong className="text-ink">Packed:</strong> {data.packed_at} with sealed batch code.</div>
+              <div><strong className="text-ink">Inspection:</strong> {data.inspection_status}.</div>
+              <div><strong className="text-ink">Rating:</strong> {data.kitchen_rating} from this delivery point.</div>
             </div>
           </Card>
           <Card className="p-4 border border-line">

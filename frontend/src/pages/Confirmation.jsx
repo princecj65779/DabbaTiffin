@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { Card, DarkButton, Notice, OutlineButton } from "../components/ui";
-import { money } from "../lib/format";
+import { money, formatDateFull } from "../lib/format";
 
 const SKIP_CUTOFF = "23:59";
 
@@ -34,14 +34,14 @@ export default function Confirmation() {
         <div className="w-16 h-16 rounded-full bg-saffron text-ink flex items-center justify-center text-3xl font-extrabold mx-auto mb-5">
           ✓
         </div>
-        <div className="text-2xl font-extrabold">Tomorrow is sorted</div>
+        <div className="text-2xl font-extrabold">{formatDateFull(booking.date)} is sorted</div>
         <div className="text-sm opacity-90 mt-2 leading-relaxed max-w-sm mx-auto">
           {breakfast && lunch
             ? "Breakfast and lunch are"
             : breakfast
             ? "Breakfast is"
             : "Lunch is"}{" "}
-          in the {booking.date} batch.
+          in the batch.
         </div>
       </div>
 
@@ -54,6 +54,19 @@ export default function Confirmation() {
           <SummaryRow label="Paid" value={`${money(booking.total_amount)} · ${booking.payment_method.toUpperCase()}`} />
         </Card>
 
+        <Card className="p-4 flex flex-col gap-3">
+          <div className="text-sm font-extrabold text-ink">Booked meals</div>
+          {booking.meals.map((meal) => (
+            <div key={meal.id} className="flex justify-between gap-3 text-[13px]">
+              <span>
+                <span className="font-extrabold capitalize">{meal.meal_type}</span>
+                <span className="block text-xs text-muted mt-0.5">{meal.dish_name}{meal.note ? ` · ${meal.note}` : ""}</span>
+              </span>
+              <span className="font-extrabold">{money(meal.price)}</span>
+            </div>
+          ))}
+        </Card>
+
         <Notice>
           Changed your mind? Skip either meal free until <strong>{SKIP_CUTOFF}</strong> tonight and the amount
           returns to your wallet.
@@ -62,7 +75,7 @@ export default function Confirmation() {
         <Card className="p-4">
           <div className="text-sm font-extrabold text-ink">Make it automatic</div>
           <div className="text-xs text-muted mt-1 leading-relaxed">
-            A breakfast plan books every weekday for you at ₹45 a meal.
+            A subscription can auto-book weekday meals at your saved delivery point.
           </div>
           <Link to="/plans" className="mt-3 block">
             <OutlineButton className="w-full">See plans</OutlineButton>

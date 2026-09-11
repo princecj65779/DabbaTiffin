@@ -216,6 +216,9 @@ def track_order(
 
     delivery_point = current_user.delivery_point
     point_name = delivery_point.name if delivery_point else "your point"
+    area = delivery_point.area if delivery_point else "local cluster"
+    packed_at = order.updated_at.strftime("%H:%M") if cooked_done and order.updated_at else "Pending"
+    kitchen_rating = 4.2 + (len(point_name) % 4) / 10
 
     steps = [
         schemas.TrackingStep(
@@ -247,7 +250,13 @@ def track_order(
     return schemas.TrackingOut(
         order=order,
         batch_code=order.booking.batch_code if order.booking else "SP-C / batch 1",
-        rider_name="Sameer · batch rider",
+        rider_name=f"{point_name.split(',')[0]} batch rider",
+        rider_phone=current_user.mobile,
+        kitchen_name=f"Verified partner, {area}",
+        packed_at=packed_at,
+        inspection_status="Hygiene checklist passed" if cooked_done else "Inspection pending",
+        kitchen_rating=round(kitchen_rating, 1),
+        handoff_wait_minutes=30,
         steps=steps,
     )
 

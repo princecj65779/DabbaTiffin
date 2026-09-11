@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { useCart } from "../context/CartContext";
+import { ADD_ONS, useCart } from "../context/CartContext";
 import AppShell from "../components/AppShell";
 import Logo from "../components/Logo";
 import { Card } from "../components/ui";
 import { money, formatDateFull } from "../lib/format";
-import { formatIstTime, isBeforeIstCutoff } from "../lib/time";
+import { formatIstTime, isBeforeIstCutoff, istDateFromOffset } from "../lib/time";
 
 const STATUS_LABEL = {
   booked: "Confirmed",
@@ -56,23 +56,28 @@ export default function Home() {
     );
   }
 
-  const [todayBreakfastRaw, todayLunchRaw] = data.today;
-  const [tomorrowBreakfastRaw, tomorrowLunchRaw] = data.tomorrow;
-  const pendingForToday = cart.date === data.today_date;
-  const pendingForTomorrow = cart.date === data.tomorrow_date;
-  const todayBreakfast = pendingForToday && cart.items.breakfast
-    ? cartSlotFromMenuItem(cart.items.breakfast, "breakfast")
+  const todayDate = istDateFromOffset(0);
+  const tomorrowDate = istDateFromOffset(1);
+  const todaySlotsRaw = slotsForDate(data, todayDate);
+  const tomorrowSlotsRaw = slotsForDate(data, tomorrowDate);
+  const [todayBreakfastRaw, todayLunchRaw] = todaySlotsRaw;
+  const [tomorrowBreakfastRaw, tomorrowLunchRaw] = tomorrowSlotsRaw;
+  const todayCartItems = cart.getItems(todayDate);
+  const todayCartAddOns = cart.getAddOns(todayDate);
+  const tomorrowCartItems = cart.getItems(tomorrowDate);
+  const tomorrowCartAddOns = cart.getAddOns(tomorrowDate);
+  const todayBreakfast = todayCartItems.breakfast
+    ? cartSlotFromMenuItem(todayCartItems.breakfast, "breakfast", todayCartAddOns.breakfast)
     : todayBreakfastRaw;
-  const todayLunch = pendingForToday && cart.items.lunch
-    ? cartSlotFromMenuItem(cart.items.lunch, "lunch")
+  const todayLunch = todayCartItems.lunch
+    ? cartSlotFromMenuItem(todayCartItems.lunch, "lunch", todayCartAddOns.lunch)
     : todayLunchRaw;
-  const tomorrowBreakfast = pendingForTomorrow && cart.items.breakfast
-    ? cartSlotFromMenuItem(cart.items.breakfast, "breakfast")
+  const tomorrowBreakfast = tomorrowCartItems.breakfast
+    ? cartSlotFromMenuItem(tomorrowCartItems.breakfast, "breakfast", tomorrowCartAddOns.breakfast)
     : tomorrowBreakfastRaw;
-  const tomorrowLunch = pendingForTomorrow && cart.items.lunch
-    ? cartSlotFromMenuItem(cart.items.lunch, "lunch")
+  const tomorrowLunch = tomorrowCartItems.lunch
+    ? cartSlotFromMenuItem(tomorrowCartItems.lunch, "lunch", tomorrowCartAddOns.lunch)
     : tomorrowLunchRaw;
-  const pendingCount = pendingForToday || pendingForTomorrow ? cart.count : 0;
   const cartCount = cart.count;
   const currentTime = formatIstTime(now);
   const todayCount = [todayBreakfast, todayLunch].filter((slot) => slot.status && slot.status !== "skipped").length;
@@ -149,7 +154,7 @@ export default function Home() {
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">
                 {cartCount > 0
-                  ? `${cartCount} meal${cartCount === 1 ? "" : "s"} selected for ${formatDateFull(cart.date)}. Confirm payment to lock the batch.`
+                  ? `${cartCount} meal${cartCount === 1 ? "" : "s"} selected across ${cart.selectedDates.length} day${cart.selectedDates.length === 1 ? "" : "s"}. Confirm payment to lock the batch.`
                   : tomorrowCount > 0
                   ? `${tomorrowCount} meal${tomorrowCount === 1 ? "" : "s"} already set for tomorrow. You can still edit before the cutoff.`
                   : "Tomorrow's menu is ready to pre-book from one familiar Flipkart surface."}
@@ -190,17 +195,20 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           {cartCount > 0 && (
             <PendingCartCard
-              date={cart.date}
-              items={cart.items}
+              selectedDates={cart.selectedDates}
+              selectedMeals={cart.selectedMeals}
               total={cart.total}
               onReview={() => navigate("/booking")}
-              onEdit={() => navigate(`/menu?date=${cart.date}&meal=${cart.items.breakfast ? "breakfast" : "lunch"}`)}
+              onEdit={() => {
+                const firstMeal = cart.selectedMeals[0];
+                navigate(`/menu?date=${firstMeal.date}&meal=${firstMeal.mealType}`);
+              }}
             />
           )}
 
           <div className="hidden md:flex justify-between items-end">
             <div>
-              <div className="text-2xl font-extrabold text-ink">Today, {formatDateFull(data.today_date)}</div>
+              <div className="text-2xl font-extrabold text-ink">Today, {formatDateFull(todayDate)}</div>
               <div className="text-sm text-mutedwarm mt-1">{mealCountLabel} in the {data.delivering_to} batch</div>
             </div>
             {data.menu_live && (
@@ -212,7 +220,7 @@ export default function Home() {
 
           <Card className="overflow-hidden border border-line smooth-card animate-fade-up" style={{ animationDelay: "120ms" }}>
             <div className="bg-white px-4 py-3 text-xs font-extrabold flex justify-between border-b border-line">
-              <span>TODAY, {formatDateFull(data.today_date).toUpperCase()}</span>
+              <span>TODAY, {formatDateFull(todayDate).toUpperCase()}</span>
               <span className="text-bottle">{mealCountLabel.toUpperCase()}</span>
             </div>
             <TodayRow
@@ -229,7 +237,7 @@ export default function Home() {
           <Card className="p-4 flex flex-col gap-3 border border-line smooth-card animate-fade-up" style={{ animationDelay: "160ms" }}>
             <div className="flex justify-between items-center">
               <div className="text-xs font-extrabold text-muted tracking-wide">
-                TOMORROW, {formatDateFull(data.tomorrow_date).toUpperCase()}
+                TOMORROW, {formatDateFull(tomorrowDate).toUpperCase()}
               </div>
               {data.menu_live && (
                 <div className="bg-saffron text-ink text-[10px] font-extrabold px-2 py-1 rounded tracking-wide">
@@ -240,7 +248,7 @@ export default function Home() {
 
             <TomorrowRow
               slot={tomorrowBreakfast}
-              onBook={() => navigate(`/menu?date=${data.tomorrow_date}&meal=breakfast`)}
+              onBook={() => navigate(`/menu?date=${tomorrowDate}&meal=breakfast`)}
               onReview={() => navigate("/booking")}
               onSkip={() => skip(tomorrowBreakfast.order_id)}
               skipping={busySkip === tomorrowBreakfast.order_id}
@@ -248,7 +256,7 @@ export default function Home() {
             <div className="h-px bg-[#F0ECE7]" />
             <TomorrowRow
               slot={tomorrowLunch}
-              onBook={() => navigate(`/menu?date=${data.tomorrow_date}&meal=lunch`)}
+              onBook={() => navigate(`/menu?date=${tomorrowDate}&meal=lunch`)}
               onReview={() => navigate("/booking")}
               onSkip={() => skip(tomorrowLunch.order_id)}
               skipping={busySkip === tomorrowLunch.order_id}
@@ -370,30 +378,29 @@ function CommitStep({ title, text, active, to }) {
   );
 }
 
-function PendingCartCard({ date, items, total, onReview, onEdit }) {
-  const selectedItems = [
-    ["breakfast", items.breakfast],
-    ["lunch", items.lunch],
-  ].filter(([, item]) => Boolean(item));
-
+function PendingCartCard({ selectedDates, selectedMeals, total, onReview, onEdit }) {
   return (
     <Card className="p-4 border border-bottle bg-[#EEF4FF] smooth-card animate-fade-up">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-[11px] font-extrabold tracking-wide text-bottle uppercase">Selected for checkout</div>
-          <div className="mt-1 text-sm font-extrabold text-ink">{formatDateFull(date)}</div>
+          <div className="mt-1 text-sm font-extrabold text-ink">
+            {selectedDates.length === 1 ? formatDateFull(selectedDates[0]) : `${selectedDates.length} service days`}
+          </div>
         </div>
         <div className="text-sm font-extrabold text-bottle">{money(total)}</div>
       </div>
       <div className="mt-3 grid gap-2">
-        {selectedItems.map(([mealType, item]) => (
-          <div key={mealType} className="flex items-center gap-3 rounded bg-white/75 p-2">
+        {selectedMeals.map(({ date, mealType, item, addOns }) => (
+          <div key={`${date}-${mealType}`} className="flex items-center gap-3 rounded bg-white/75 p-2">
             <div className="h-11 w-11 flex-none overflow-hidden rounded bg-surface">
               <DishThumb name={item.dish.name} imageUrl={item.dish.image_url} />
             </div>
             <div className="flex-1">
               <div className="text-sm font-extrabold text-ink">{item.dish.name}</div>
-              <div className="text-[11px] font-bold capitalize text-bottle">{mealType} · selected, not paid</div>
+              <div className="text-[11px] font-bold capitalize text-bottle">
+                {formatDateFull(date)} · {mealType} · selected, not paid{addOnText(addOns) ? ` · ${addOnText(addOns)}` : ""}
+              </div>
             </div>
           </div>
         ))}
@@ -427,6 +434,9 @@ function TodayRow({ slot, border = true, onTrack }) {
           {isSelected && "Selected, not paid"}
           {!slot.status && "Nothing booked for today"}
         </div>
+        {slot.add_ons?.length > 0 && (
+          <div className="mt-1 text-[11px] font-bold text-mutedwarm">{addOnText(slot.add_ons)}</div>
+        )}
       </div>
       {slot.status === "handed_over" && (
         <div className="text-[11px] font-extrabold text-good border border-good rounded px-2 py-1">DONE</div>
@@ -463,6 +473,9 @@ function TomorrowRow({ slot, onBook, onReview, onSkip, skipping }) {
         <div className={`text-xs mt-0.5 ${booked ? "text-good font-bold" : selected ? "text-bottle font-bold" : "text-muted"}`}>
           {slot.note || (booked ? "Booked" : selected ? "Selected, not paid" : slot.status === "skipped" ? "Skipped" : "")}
         </div>
+        {slot.add_ons?.length > 0 && (
+          <div className="mt-1 text-[11px] font-bold text-mutedwarm">{addOnText(slot.add_ons)}</div>
+        )}
       </div>
       {selected && (
         <button onClick={onReview} className="text-xs font-extrabold text-ink bg-saffron rounded-md px-3 py-2">
@@ -488,7 +501,7 @@ function TomorrowRow({ slot, onBook, onReview, onSkip, skipping }) {
   );
 }
 
-function cartSlotFromMenuItem(item, mealType) {
+function cartSlotFromMenuItem(item, mealType, addOns = []) {
   return {
     meal_type: mealType,
     dish_name: item.dish.name,
@@ -497,7 +510,34 @@ function cartSlotFromMenuItem(item, mealType) {
     price: item.price,
     image_url: item.dish.image_url,
     preview_dishes: [],
+    add_ons: addOns,
   };
+}
+
+function slotsForDate(data, date) {
+  if (data.today_date === date) return data.today;
+  if (data.tomorrow_date === date) return data.tomorrow;
+  return [emptySlot("breakfast"), emptySlot("lunch")];
+}
+
+function emptySlot(mealType) {
+  return {
+    meal_type: mealType,
+    dish_name: null,
+    status: null,
+    slot_window: "",
+    note: "",
+    price: 0,
+    image_url: null,
+    preview_dishes: [],
+  };
+}
+
+function addOnText(addOnIds = []) {
+  return addOnIds
+    .map((id) => ADD_ONS.find((item) => item.id === id)?.label)
+    .filter(Boolean)
+    .join(" + ");
 }
 
 export function DishThumb({ name, imageUrl }) {

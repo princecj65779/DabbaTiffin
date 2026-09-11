@@ -93,6 +93,7 @@ def home(
     today_meals_count = sum(1 for slot in today_slots if slot.status and slot.status != models.OrderStatus.skipped)
     tomorrow_booked_count = sum(1 for slot in tomorrow_slots if slot.status == models.OrderStatus.booked)
     route_confirmed_meals = 0
+    route_discount_target = 15
     if current_user.delivery_point_id:
         route_confirmed_meals = (
             db.query(models.MealOrder)
@@ -104,6 +105,7 @@ def home(
             )
             .count()
         )
+        route_discount_target = 50 if route_confirmed_meals >= 25 else 25 if route_confirmed_meals >= 15 else 15
 
     return schemas.HomeOut(
         today_date=today,
@@ -119,6 +121,7 @@ def home(
         today_meals_count=today_meals_count,
         tomorrow_booked_count=tomorrow_booked_count,
         route_confirmed_meals=route_confirmed_meals,
+        route_discount_target=route_discount_target,
         menu_live=tomorrow_menu_exists,
         subscription=subscription,
         spent_this_month=sum(float(o.price) for o in spent),
